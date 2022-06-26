@@ -5,6 +5,9 @@ Parse.masterKey = process.env.VUE_APP_MASTER_KEY;
 
 Parse.serverURL = process.env.VUE_APP_SERVER_URL
 
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.VUE_APP_SENDGRID_API_KEY);
+
 exports.GetUsers = async () => {
     const User = Parse.Object.extend("User");
     const query = new Parse.Query(User);
@@ -70,6 +73,32 @@ exports.SaveStudyDataState = async (studyDataObject, branch, cueingMethod1, cuei
     } catch(e) {
         console.log(e);
         return null;
+    }
+
+}
+
+exports.SendConfirmationEmail = async(email) => {
+   
+    const emailBody = {
+        to: email,
+        from: process.env.VUE_APP_EMAIL_SENDER,
+        templateId: process.env.VUE_APP_TEMPLATE_ID,
+        dynamicTemplateData: {
+            email,
+        },
+    }
+
+    try {
+        console.log(emailBody);
+        const result = await sgMail.send(emailBody);
+        console.log(result);
+        return true;
+    } catch (error) {
+        console.error(error);
+        if (error.response) {
+            console.error(error.response.body)
+        }
+        return false;
     }
 
 }

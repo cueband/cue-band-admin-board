@@ -104,6 +104,10 @@ export default {
                 var result = await api.SaveStudyDataState(this.info.studyDataObject, "Trial", cueingMethod1, cueingMethod2);
                 console.log(result);
 
+                const email = this.info.studyDataObject["insertTokenEmail"];
+
+                const sendConfirmationResult = await api.SendConfirmationEmail(email);
+
             } else if(freeLivingButton.checked) {
                 var resultFreeLiving = await api.SaveStudyDataState(this.info.studyDataObject, "FreeLiving", null, null);
                 console.log(resultFreeLiving);
@@ -111,9 +115,8 @@ export default {
                 var resultNoStudy = await api.SaveStudyDataState(this.info.studyDataObject, "NoStudy", null, null);
                  console.log(resultNoStudy);
             }
+        },
 
-
-        }
     }
 };
 </script>
