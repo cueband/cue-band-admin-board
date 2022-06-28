@@ -106,7 +106,7 @@ export default {
 
                 const email = this.info.studyDataObject["insertTokenEmail"];
 
-                const sendConfirmationResult = await api.SendConfirmationEmail(email);
+                await api.SendConfirmationEmail(email);
 
             } else if(freeLivingButton.checked) {
                 var resultFreeLiving = await api.SaveStudyDataState(this.info.studyDataObject, "FreeLiving", null, null);
