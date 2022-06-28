@@ -10,26 +10,26 @@
     <div class="p-3 card-body">
         <div style="margin-bottom: 30px">
             <strong class="text-dark" style="margin-right: 20px; text-align: center;" >Study Branch:</strong>
-            <input type="radio" id="studyBranchTrial" name="studyBranch" value="Trial" @click="showCueingOptions"/>
+            <input type="radio" id="studyBranchTrial" name="studyBranch" value="Trial" v-model="selectedStudyBranch"/>
             <label for="studyBranchTrial" style="margin-right: 20px">Trial</label>
-            <input type="radio" id="studyBranchFreeLiving" name="studyBranch" value="Free Living" @click="hideCueingOptions"/>
+            <input type="radio" id="studyBranchFreeLiving" name="studyBranch" value="FreeLiving" v-model="selectedStudyBranch"/>
             <label for="studyBranchFreeLiving" style="margin-right: 20px">Free-Living</label>
-            <input type="radio" id="studyBranchNoStudy" name="studyBranch" value="noStudy" @click="hideCueingOptions"/>
+            <input type="radio" id="studyBranchNoStudy" name="studyBranch" value="NoStudy" v-model="selectedStudyBranch"/>
             <label for="studyBranchNoStudy">No Study</label>
         </div>
-        <div id="cueingMethods" style="display: none">
+        <div id="cueingMethods" v-if="selectedStudyBranch === 'Trial'">
             <div style="margin-bottom: 30px">
                 <strong class="text-dark" style="margin-right: 20px">Cueing Method 1:</strong>
-                <input type="radio" id="CueingMethod1Phone" name="cueingMethod1" value="Phone"/>
+                <input type="radio" id="CueingMethod1Phone" name="cueingMethod1" value="phone" v-model="selectedCueingMethod1"/>
                 <label for="CueingMethod1Phone" style="margin-right: 20px">Phone</label>
-                <input type="radio" id="CueingMethod1CueBand" name="cueingMethod1" value="CueBand"/>
+                <input type="radio" id="CueingMethod1CueBand" name="cueingMethod1" value="cueband" v-model="selectedCueingMethod1"/>
                 <label for="CueingMethod1CueBand">CueBand</label>
             </div>
             <div style="margin-bottom: 30px">
                 <strong class="text-dark" style="margin-right: 20px">Cueing Method 2:</strong>
-                <input type="radio" id="CueingMethod2Phone" name="cueingMethod2" value="Phone"/>
+                <input type="radio" id="CueingMethod2Phone" name="cueingMethod2" value="phone" v-model="selectedCueingMethod2"/>
                 <label for="CueingMethod2Phone" style="margin-right: 20px">Phone</label>
-                <input type="radio" id="CueingMethod2CueBand" name="cueingMethod2" value="CueBand"/>
+                <input type="radio" id="CueingMethod2CueBand" name="cueingMethod2" value="cueband" v-model="selectedCueingMethod2"/>
                 <label for="CueingMethod2CueBand">CueBand</label>
             </div>
             <div style="display: flex;justify-content: center;margin-bottom: 30px">
@@ -40,80 +40,96 @@
         <div style="display: flex;justify-content: center;">
             <button class="btn btn-white" @click="saveBranchInfo">Save</button>
         </div>
+        <soft-alert :color="isSavedSuccessfully ? 'success' : 'danger'" :class="{show: alertTimer}" class="alert-dismissible fade" style="position: absolute; top: 5px; left: 10px; right: 10px;" :style="{'pointer-events': alertTimer? 'all' : 'none'}" >
+            {{ saveMessage }}
+        </soft-alert>
     </div>
   </div>
 </template>
 <script>
-
+import SoftAlert from "@/components/VsudAlert.vue";
 import api from "../../api"
 export default {
     name: "SelectBranchCard",
+    components: { SoftAlert },
     props: {
         info: {
-                studyDataObject: {},
-            },
+            studyDataObject: {},
+        },
+    },
+    data() {
+        return {
+            selectedStudyBranch: null,
+            selectedCueingMethod1: null,
+            selectedCueingMethod2: null,
+            saveMessage: null,
+            isSavedSuccessfully: false,
+            alertTimer: null,
+            alertTimeoutPeriod: 3000
+        }
+    },
+    mounted () {
+        try {
+            this.selectedStudyBranch = this.info.studyDataObject.get("studyBranch");
+            this.selectedCueingMethod1 = this.info.studyDataObject.get("cueingMethod1");
+            this.selectedCueingMethod2 = this.info.studyDataObject.get("cueingMethod2");
+        } catch (error) {
+            // TODO: handle error properly
+            return;
+        }
     },
     methods: {
+        showAlert(isSuccessful, message) {
+            if (this.alertTimer) {
+                clearTimeout(this.alertTimer)
+                this.alertTimer = null
+            }
+
+            this.saveMessage = message;
+            this.isSavedSuccessfully = isSuccessful;
+
+            this.alertTimer = setTimeout(() => {
+                this.saveMessage = null;
+                this.alertTimer = null;
+            }, this.alertTimeoutPeriod)
+        },
+        onSaveError(errorMessage) {
+            this.showAlert(false, errorMessage);
+        },
+        onSaveSuccessful() {
+            this.showAlert(true, "Changes saved sucessfully!");
+        },
         selectCueingMethodRandomly() {
             var randomSelection = Math.round(Math.random());
             if(randomSelection == 0) {
-                const radioButtonCueingMethod1Phone = document.getElementById("CueingMethod1Phone");
-                radioButtonCueingMethod1Phone.checked = true;
-                const radioButtonCueingMethod2CueBand = document.getElementById("CueingMethod2CueBand");
-                radioButtonCueingMethod2CueBand.checked = true;
+                this.selectedCueingMethod1 = "phone";
+                this.selectedCueingMethod2 = "cueband";
             } else if(randomSelection == 1) {
-                const radioButtonCueingMethod1CueBand = document.getElementById("CueingMethod1CueBand");
-                radioButtonCueingMethod1CueBand.checked = true;
-                const radioButtonCueingMethod2Phone = document.getElementById("CueingMethod2Phone");
-                radioButtonCueingMethod2Phone.checked = true;
+                this.selectedCueingMethod1 = "cueband";
+                this.selectedCueingMethod2 = "phone";
             }
         },
-        showCueingOptions() {
-            document.getElementById('cueingMethods').style.display = 'block';
-        },
-        hideCueingOptions() {
-            document.getElementById('cueingMethods').style.display ='none';
-        },
         async saveBranchInfo() {
-            const trialButton = document.getElementById("studyBranchTrial");
-            const freeLivingButton = document.getElementById("studyBranchFreeLiving");
-            const noStudyButton = document.getElementById("studyBranchNoStudy");
-
-            if(trialButton.checked) {
-                const radioButtonCueingMethod1Phone = document.getElementById("CueingMethod1Phone");
-                const radioButtonCueingMethod2Phone = document.getElementById("CueingMethod2Phone");
-                const radioButtonCueingMethod1CueBand = document.getElementById("CueingMethod1CueBand");
-                const radioButtonCueingMethod2CueBand = document.getElementById("CueingMethod2CueBand");
-   
-                var cueingMethod1 = "";
-                if(radioButtonCueingMethod1Phone.checked) {
-                    cueingMethod1 = "phone";
+            try {
+                const email = this.info.studyDataObject.get("insertTokenEmail");
+                let result;
+                let confirmationEmailSuccess = true;
+                switch (this.selectedStudyBranch) {
+                    case 'Trial':
+                        result = await api.SaveStudyDataState(this.info.studyDataObject, this.selectedStudyBranch, this.selectedCueingMethod1, this.selectedCueingMethod2);
+                        confirmationEmailSuccess = await api.SendConfirmationEmail(email);
+                        break;
+                    case 'FreeLiving': case 'NoStudy':
+                        result = await api.SaveStudyDataState(this.info.studyDataObject, this.selectedStudyBranch, null, null);
+                        break;
+                    default:
+                        this.onSaveError("Please select a study branch");
                 }
-                if(radioButtonCueingMethod1CueBand.checked) {
-                    cueingMethod1 = "cueband";
-                }
-
-                 var cueingMethod2 = "";
-                if(radioButtonCueingMethod2Phone.checked) {
-                    cueingMethod2 = "phone";
-                }
-                if(radioButtonCueingMethod2CueBand.checked) {
-                    cueingMethod2 = "cueband";
-                }
-
-                var result = await api.SaveStudyDataState(this.info.studyDataObject, "Trial", cueingMethod1, cueingMethod2);
-                console.log(result);
-
-                const email = this.info.studyDataObject["insertTokenEmail"];
-
-                await api.SendConfirmationEmail(email);
-
-            } else if(freeLivingButton.checked) {
-                var resultFreeLiving = await api.SaveStudyDataState(this.info.studyDataObject, "FreeLiving", null, null);
-                console.log(resultFreeLiving);
-            } else if(noStudyButton.checked) {
-                var resultNoStudy = await api.SaveStudyDataState(this.info.studyDataObject, "NoStudy", null, null);
-                 console.log(resultNoStudy);
+                if (result && confirmationEmailSuccess) this.onSaveSuccessful();
+                else if (!result) this.onSaveError("An error occured while saving changes.");
+                else if (!confirmationEmailSuccess) this.onSaveError("Email could not be sent.");
+            } catch (error) {
+                this.onSaveError(`An error occured: ${error.message}`);
             }
         },
 

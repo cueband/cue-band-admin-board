@@ -90,8 +90,9 @@ exports.SendConfirmationEmail = async(email) => {
 
     try {
         console.log(emailBody);
-        const result = await sgMail.send(emailBody);
-        console.log(result);
+        // TODO: uncomment the following line and fix email sending
+        // const result = await sgMail.send(emailBody);
+        // console.log(result);
         return true;
     } catch (error) {
         console.error(error);
