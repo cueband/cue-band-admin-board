@@ -18,6 +18,14 @@
             <label for="studyBranchNoStudy">No Study</label>
         </div>
         <div id="cueingMethods" v-if="selectedStudyBranch === 'Trial'">
+            <div v-if="methodCounts" class="mb-4">
+                <div>
+                    <strong>Phone-Cueband:</strong> {{methodCounts.phoneCueband}}
+                </div>
+                <div>
+                    <strong>Cueband-Phone:</strong> {{methodCounts.cuebandPhone}}
+                </div>
+            </div>
             <div style="margin-bottom: 30px">
                 <strong class="text-dark" style="margin-right: 20px">Cueing Method 1:</strong>
                 <input type="radio" id="CueingMethod1Phone" name="cueingMethod1" value="phone" v-model="selectedCueingMethod1"/>
@@ -48,7 +56,9 @@
 </template>
 <script>
 import SoftAlert from "@/components/VsudAlert.vue";
-import api from "../../api"
+import { mapGetters, mapActions } from "vuex";
+
+import api from "@/api"
 export default {
     name: "SelectBranchCard",
     components: { SoftAlert },
@@ -65,7 +75,7 @@ export default {
             saveMessage: null,
             isSavedSuccessfully: false,
             alertTimer: null,
-            alertTimeoutPeriod: 3000
+            alertTimeoutPeriod: 3000,
         }
     },
     mounted () {
@@ -73,12 +83,15 @@ export default {
             this.selectedStudyBranch = this.info.studyDataObject.get("studyBranch");
             this.selectedCueingMethod1 = this.info.studyDataObject.get("cueingMethod1");
             this.selectedCueingMethod2 = this.info.studyDataObject.get("cueingMethod2");
+
         } catch (error) {
             // TODO: handle error properly
             return;
         }
     },
+    computed: mapGetters(['methodCounts']),
     methods: {
+        ...mapActions(['fetchMethodCounts']),
         showAlert(isSuccessful, message) {
             if (this.alertTimer) {
                 clearTimeout(this.alertTimer)
@@ -97,7 +110,9 @@ export default {
             this.showAlert(false, errorMessage);
         },
         onSaveSuccessful() {
+            this.fetchMethodCounts();
             this.showAlert(true, "Changes saved sucessfully!");
+            // TODO: update user data in UI on save
         },
         selectCueingMethodRandomly() {
             var randomSelection = Math.round(Math.random());

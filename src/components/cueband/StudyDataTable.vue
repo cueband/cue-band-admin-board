@@ -69,13 +69,14 @@ export default {
     },
     computed: mapGetters(['allStudyData']),
     methods: {
-        ...mapActions(['fetchStudyData']),
+        ...mapActions(['fetchStudyData', 'fetchMethodCounts']),
         goToStudyDataPage(id) {
           this.$router.push(`/studydata/${id}`);
         }
     },
    created() {
      this.fetchStudyData();
+     this.fetchMethodCounts();
    }
 
 };

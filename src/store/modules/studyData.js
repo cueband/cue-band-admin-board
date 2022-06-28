@@ -1,7 +1,8 @@
 import API from '../../api' 
 
 const state = {
-    studyData: []
+    studyData: [],
+    methodCounts: {}
 };
 
 const getters = {
@@ -10,6 +11,7 @@ const getters = {
         console.log(id);
         return state.studyData.find(elem => elem.id == id)
     },
+    methodCounts: (state) => state.methodCounts
 };
 
 const actions = {
@@ -18,11 +20,16 @@ const actions = {
     
         console.log(response);
         commit('setStudyData', response);
+    }, 
+    async fetchMethodCounts({ commit }) {
+        const response = await API.GetCueingMethodCounts();    
+        commit('setMethodCounts', response);
     }
 };
 
 const mutations = {
-    setStudyData: (state, studyData) => (state.studyData = studyData)
+    setStudyData: (state, studyData) => (state.studyData = studyData),
+    setMethodCounts: (state, methodCounts) => (state.methodCounts = methodCounts)
 };
 
 export default {

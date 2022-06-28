@@ -47,6 +47,24 @@ exports.GetDiaryEntries = async (user) => {
     return results;
 }
 
+exports.GetCueingMethodCounts = async () => {
+    const StudyData = Parse.Object.extend("StudyData");
+    const queryPhoneCueband = new Parse.Query(StudyData);
+    queryPhoneCueband.equalTo("cueingMethod1", "phone");
+    queryPhoneCueband.equalTo("cueingMethod2", "cueband");
+    const countPhoneCueband = await queryPhoneCueband.count({useMasterKey: true});
+
+    const queryCuebandPhone = new Parse.Query(StudyData);
+    queryCuebandPhone.equalTo("cueingMethod1", "cueband");
+    queryCuebandPhone.equalTo("cueingMethod2", "phone");
+    const countCuebandPhone = await queryCuebandPhone.count({useMasterKey: true});
+    
+    return {
+        cuebandPhone: countCuebandPhone,
+        phoneCueband: countPhoneCueband    
+    };
+} 
+
 
 exports.SaveStudyDataState = async (studyDataObject, branch, cueingMethod1, cueingMethod2) => {
 
