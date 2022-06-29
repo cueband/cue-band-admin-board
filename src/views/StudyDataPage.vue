@@ -182,7 +182,7 @@
   </div>
   <div class="py-4 container-fluid">
     <div class="mt-3 row" style="justify-content: center">
-      <div class="col-12 col-md-6 col-xl-4">
+      <div class="col-12 col-md-6 col-xl-4" v-if="studyDataObject.get('currentStatus') == 'WaitingForBranchApproval'">
         <select-branch-card :info="{ studyDataObject: studyDataObject }"/>
       </div>
     </div>
