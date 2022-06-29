@@ -1,7 +1,7 @@
 <template>
   <div class="card mb-4">
     <div class="card-header pb-0">
-      <h6>Study Data Table</h6>
+      <h6>Study Data Table{{tableName && `: ${ tableName }`}}</h6>
     </div>
     <div class="card-body px-0 pt-0 pb-2">
       <div class="table-responsive p-0">
@@ -25,8 +25,7 @@
               </th>
             </tr>
           </thead>
-          <tbody>
-
+          <tbody v-if="allStudyData.length > 0">
             <tr v-for="studyData in allStudyData" v-bind:key="studyData.id">
               <td>
                 <div class="d-flex px-2">
@@ -53,6 +52,13 @@
               </td>
             </tr>
           </tbody>
+          <tbody v-else>
+            <tr>
+              <td colspan="100%" class="align-middle text-center">
+                <span class="text-sm text-secondary opacity-7 font-weight-bold">No records found</span>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -60,24 +66,16 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from "vuex";
-
 export default {
     name: "study-data-table",
-    components: {
-
+    props: {
+      tableName: {type: String},
+      allStudyData: {type: Array, required: true},
     },
-    computed: mapGetters(['allStudyData']),
     methods: {
-        ...mapActions(['fetchStudyData', 'fetchMethodCounts']),
-        goToStudyDataPage(id) {
-          this.$router.push(`/studydata/${id}`);
-        }
-    },
-   created() {
-     this.fetchStudyData();
-     this.fetchMethodCounts();
-   }
-
+      goToStudyDataPage(id) {
+        this.$router.push(`/studydata/${id}`);
+      }
+    }
 };
 </script>

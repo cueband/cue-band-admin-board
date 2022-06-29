@@ -7,6 +7,12 @@ const state = {
 
 const getters = {
     allStudyData: (state) => state.studyData,
+    studyDataAwaitingApproval: (state) => state.studyData.filter(s => ( s.get("currentState") == "WaitingForBranchApproval")),
+    studyDataAwaitingDevice: (state) => state.studyData.filter(s => ( s.get("currentState") == "WaitingForDevice")),
+    studyDataNoStudy: (state) => state.studyData.filter(s => ( s.get("studyBranch") == "NoStudy")),
+    studyDataTrial: (state) => state.studyData.filter(s => ( s.get("studyBranch") == "Trial")),
+    studyDataFreeLiving: (state) => state.studyData.filter(s => ( s.get("studyBranch") == "FreeLiving")),
+    studyDataFreeLivingFromTrial: (state) => state.studyData.filter(s => ( s.get("studyBranch") == "FreeLivingFromTrial")),
     getStudyDataById: (state) => (id) => {
         console.log(id);
         return state.studyData.find(elem => elem.id == id)
