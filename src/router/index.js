@@ -8,6 +8,7 @@ import Rtl from "@/views/Rtl.vue";
 import SignIn from "@/views/SignIn.vue";
 import SignUp from "@/views/SignUp.vue";
 import Users from "@/views/Users.vue";
+import UserDevices from "@/views/UserDevices.vue";
 import StudyDataPage from "@/views/StudyDataPage.vue"
 
 
@@ -16,6 +17,11 @@ const routes = [
     path: "/",
     name: "/",
     redirect: "/dashboard",
+  },
+  {
+    path: "/user-devices",
+    name: "User Devices",
+    component: UserDevices,
   },
   {
     path: "/dashboard",
