@@ -67,6 +67,12 @@
     }
   }
 
+  &.highlight-on-hover {
+    &:hover {
+      background: $light !important;
+    }
+  }
+
   &.gradient-animation {
     background: $gradient-animation-background;
     background-size: $gradient-animation-bg-size !important;
@@ -318,4 +324,29 @@ hr.horizontal {
       position: absolute;
     }
   }
+}
+
+.w-fit {
+  width: fit-content;
+}
+
+.text-xl {
+  font-size: $font-size-3xl;
+}
+
+.pre-wrap {
+	white-space: pre-wrap;
+}
+
+button.green {
+  background: $success;
+}
+
+
+button.blue {
+  background: $blue;
+}
+
+button.red {
+  background: $orange;
 }

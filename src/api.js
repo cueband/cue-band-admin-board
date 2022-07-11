@@ -22,6 +22,51 @@ exports.GetStudyData = async () => {
     return results;
 }
 
+exports.GetUsersDeliveryInfoByIdArr = async (userIds) => {
+    const User = Parse.Object.extend("User");
+    const userQuery = new Parse.Query(User);
+    userQuery.containedIn("objectId", userIds);
+
+    const DeliveryAddress = Parse.Object.extend("DeliveryAddress");
+    const addressQuery = new Parse.Query(DeliveryAddress);
+    addressQuery.matchesKeyInQuery("user", "objectId", userQuery);
+    const results = await addressQuery.find({useMasterKey: true});
+    return results;
+}
+
+exports.getDeviceOrderByTrackingCode = async (trackingCode) => {
+    const DeviceOrder = Parse.Object.extend("DeviceOrderSchema");
+    const query = new Parse.Query(DeviceOrder);
+    query.equalTo("trackingCode", trackingCode);
+    const results = await query.find({useMasterKey: true});
+    return results;
+}
+
+exports.getDeviceOrderByLabel = async (labelCode) => {
+    let trimmedLabelCode = labelCode.substring(3);
+    const DeviceOrder = Parse.Object.extend("DeviceOrderSchema");
+    const query = new Parse.Query(DeviceOrder);
+    query.equalTo("objectId", trimmedLabelCode);
+    const results = await query.find({useMasterKey: true});
+    return results;
+}
+
+exports.getDeviceBoxById = async (deviceBox) => {
+    const DeviceBox = Parse.Object.extend("DeviceBoxSchema");
+    const query = new Parse.Query(DeviceBox);
+    query.equalTo("objectId", deviceBox);
+    const results = await query.find({useMasterKey: true});
+    return results;
+}
+
+exports.getDeviceBoxByBoxNumber = async (boxNumber) => {
+    const DeviceBox = Parse.Object.extend("DeviceBoxSchema");
+    const query = new Parse.Query(DeviceBox);
+    query.equalTo("boxNumber", boxNumber);
+    const results = await query.find({useMasterKey: true});
+    return results;
+}
+
 exports.GetConsent = async (token) => {
     const Consent = Parse.Object.extend("Consent");
     const query = new Parse.Query(Consent);
@@ -93,6 +138,73 @@ exports.SaveStudyDataState = async (studyDataObject, branch, cueingMethod1, cuei
         return null;
     }
 
+}
+
+exports.saveLabelTrackingCodeData = async ({labelObject, trackingCode, boxNumber}) => {
+    let deviceBoxId = null;
+    const DeviceBox = Parse.Object.extend("DeviceBoxSchema");
+    const query = new Parse.Query(DeviceBox);
+    query.equalTo("boxNumber", boxNumber);
+    query.equalTo("user", labelObject.get('user'));
+    const boxResults = await query.find({useMasterKey: true});
+    
+    if (boxResults.length == 0) {
+        const deviceBox = new DeviceBox();
+        deviceBox.set('boxNumber', boxNumber);
+        deviceBox.set('user', labelObject.get('user'));
+        const deviceBoxACL = new Parse.ACL();
+        deviceBoxACL.setPublicReadAccess(false);
+        deviceBox.setACL(deviceBoxACL);
+        const deviceBoxSave = await deviceBox.save();
+        deviceBoxId = deviceBoxSave.id;
+    } else {
+        deviceBoxId = boxResults[0].id;
+    }
+
+    if (trackingCode) labelObject.set("trackingCode", trackingCode);
+    labelObject.set("deviceBox", deviceBoxId);
+    let result = await labelObject.save({}, { useMasterKey: true });
+    return result;
+}
+
+exports.saveAddressLabel = async ({trackingCode, user, labelId, address, boxNumber}) => {
+    let deviceBoxId = null;
+    if (boxNumber){
+        const DeviceBox = Parse.Object.extend("DeviceBoxSchema");
+        const query = new Parse.Query(DeviceBox);
+        query.equalTo("boxNumber", boxNumber);
+        query.equalTo("user", user);
+        const boxResults = await query.find({useMasterKey: true});
+        
+        if (boxResults.length == 0) {
+            const deviceBox = new DeviceBox();
+            deviceBox.set('boxNumber', boxNumber);
+            deviceBox.set('user', user);
+            const deviceBoxACL = new Parse.ACL();
+            deviceBoxACL.setPublicReadAccess(false);
+            deviceBox.setACL(deviceBoxACL);
+            const deviceBoxSave = await deviceBox.save();
+            deviceBoxId = deviceBoxSave.id;
+        } else {
+            deviceBoxId = boxResults[0].id;
+        }
+    }
+
+    const DeviceOrder = Parse.Object.extend("DeviceOrderSchema");
+    const deviceOrder = new DeviceOrder();
+    deviceOrder.set('user', user);
+    if (address) deviceOrder.set('address', address);
+    if (trackingCode) deviceOrder.set('trackingCode', trackingCode);
+    if (deviceBoxId) deviceOrder.set('deviceBox', deviceBoxId);
+    if (labelId) deviceOrder.set('labelId', labelId);
+
+    const deviceOrderACL = new Parse.ACL();
+    deviceOrderACL.setPublicReadAccess(false);
+    deviceOrder.setACL(deviceOrderACL);
+    let deviceOrderSave = await deviceOrder.save();
+    console.log(deviceOrder);
+    console.log(deviceOrderSave);
+    return deviceOrderSave;
 }
 
 exports.SendConfirmationEmail = async(email) => {

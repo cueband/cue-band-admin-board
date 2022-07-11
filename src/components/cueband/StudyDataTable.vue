@@ -8,6 +8,8 @@
         <table class="table align-items-center justify-content-center mb-0">
           <thead>
             <tr>
+              <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" v-if="isSelectable">
+              </th>
               <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
                 User ID
               </th>
@@ -20,13 +22,16 @@
               <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">
                 Study State
               </th>
-              <th>
+              <th v-if="!isSelectable">
 
               </th>
             </tr>
           </thead>
           <tbody v-if="allStudyData.length > 0">
-            <tr v-for="studyData in allStudyData" v-bind:key="studyData.id">
+            <tr v-for="studyData in allStudyData" v-bind:key="studyData.id" @click="() => selectRowIfSelectable(studyData.id)" :class="getClasses()">
+              <td v-if="isSelectable">
+                <input type="checkbox" name="user-devices" class="mx-2" v-model="selectedValues[studyData.id]"/>
+              </td>
               <td>
                 <div class="d-flex px-2">
                   <div class="my-auto">
@@ -45,7 +50,7 @@
                   <span class="me-2 text-xs font-weight-bold">{{studyData.get("currentState")}}</span>
                 </div>
               </td>
-              <td class="align-middle">
+              <td class="align-middle" v-if="!isSelectable">
                 <button class="btn btn-link text-secondary mb-0" @click.once="goToStudyDataPage(studyData.id)">
                   Show More
                 </button>
@@ -71,10 +76,43 @@ export default {
     props: {
       tableName: {type: String},
       allStudyData: {type: Array, required: true},
+      isSelectable: {type: Boolean},
+    },
+    emits: ["change"],
+    data() {
+      return {
+        selectedValues: {},
+        selectedKeys: ""
+      }
+    },
+    watch: {
+      selectedValues: {
+        deep: true,
+        handler (newVal) {
+          let newKeys = Object.keys(newVal).filter(k => newVal[k]).sort().join(',');
+          if (newKeys === this.selectedKeys) return;
+          this.selectedKeys = newKeys;
+          this.$emit("change", newKeys)
+        },
+      }
     },
     methods: {
       goToStudyDataPage(id) {
         this.$router.push(`/studydata/${id}`);
+      },
+      getClasses() {
+        return this.isSelectable ? "highlight-on-hover cursor-pointer" : "";
+      },
+      selectRowIfSelectable(rowId) {
+        this.selectedValues[rowId] = !this.selectedValues[rowId];
+      },
+      selectAll() {
+        this.allStudyData.forEach(s => {
+          this.selectedValues[s.id] = true;
+        })
+      },
+      deselectAll() {
+        this.selectedValues = {};
       }
     }
 };
