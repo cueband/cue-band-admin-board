@@ -4,11 +4,16 @@ import "svg2pdf.js";
 import JsBarcode from "jsbarcode";
 import { getLabelSvgElement } from "./label.js";
 import api from '../api';
+import callAddFontNormal from './PTSans-normal';
+import callAddFontBold from './PTSans-bold';
 
 const OFFSET_X = 0;
 const OFFSET_Y = 0;
-const VIEWPORT_WIDTH = 105;
-const VIEWPORT_HEIGHT = 148;
+const VIEWPORT_WIDTH = 101;
+const VIEWPORT_HEIGHT = 152;
+
+jsPDF.API.events.push(['addFonts', callAddFontNormal]);
+jsPDF.API.events.push(['addFonts', callAddFontBold]);
 
 
 export default {
@@ -16,8 +21,10 @@ export default {
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
-      format: [105, 148]
+      format: [101, 152]
     });
+    doc.setFont("PTSans");
+
     const dataLength = data.length;
     for (let i = 0; i < dataLength; i++) {
       const svgElement = getLabelSvgElement();
@@ -32,14 +39,14 @@ export default {
         user: addressData.get("user"),
         address: [addressData.get("name") || "", addressData.get("addressLine1") || "", addressData.get("addressLine2") || "", addressData.get("city") || "", addressData.get("postcode") || ""].join('\n'),
       })
-      var canv = document.createElement('canvas');
+      let canv = document.createElement('canvas');
       JsBarcode(canv, `cue${label.id}`, {
         height: 100,
         width: 3,
         fontSize: 30
       });
       console.log(canv);
-      console.log(canv.toDataURL());
+
       svgElement.querySelector('#label_barcode').setAttributeNS('http://www.w3.org/1999/xlink','href', canv.toDataURL());
       await doc
         .svg(svgElement, {

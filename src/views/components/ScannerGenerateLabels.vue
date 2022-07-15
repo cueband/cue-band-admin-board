@@ -29,14 +29,14 @@
 
         <div class="row my-4">
           <label class="text-lg">Box Number: 
-            <input type="text" v-model="boxNumber" ref="boxNum"/>
+            <input type="text" v-model="boxNumber" ref="boxNum2" :disabled="!saveButtonDisabled && (this.error || this.trackingError)"/>
           </label> 
         </div>
 
         <div class="row p-4">
           <button class="btn text-lg" :disabled="saveButtonDisabled" @click="saveValues()" :class="saveButtonClass">
             {{ saveButtonText }}
-            <img v-show="!saveButtonDisabled" src="@/assets/img/savecode.png"/>
+            <br v-show="!saveButtonDisabled"><img v-show="!saveButtonDisabled" src="@/assets/img/savecode.png"/>
           </button> 
         </div>
 
@@ -141,7 +141,7 @@ export default {
       }
 
       if (this.trackingCode && !this.boxNumber && !this.trackingError) {
-        this.$refs.boxNum.focus();
+        this.$refs.boxNum2.focus();
       }
     },
     async boxNumber(newVal, oldVal) {
@@ -157,6 +157,7 @@ export default {
       if (boxData && boxData.length > 0) {
         this.boxData = boxData[0];
         if (this.boxData.get('user').id != this.selectedUsersData[this.currentIndex].get('user').id) this.warning = "This box number is already assigned to a different user.";
+        else if (this.boxData.get('user').id == this.selectedUsersData[this.currentIndex].get('user').id) this.warning = "The box number has been assigned to this user before.";
       }
     }
   },

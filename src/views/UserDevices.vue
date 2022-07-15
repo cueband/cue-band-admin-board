@@ -27,7 +27,7 @@
       <div class="row">
         <div class="col-12">
           <div class="nav nav-pills p-2 d-flex justify-content-end">
-            <button class="bg-white text-center shadow border-radius-md d-flex align-items-center justify-content-center m-2 text-sm text-bold w-fit p-2 btn border-0 text-muted" @click="startOverPregeneratedScan">Clear Values & Start OVer</button>
+            <button class="bg-white text-center shadow border-radius-md d-flex align-items-center justify-content-center m-2 text-sm text-bold w-fit p-2 btn border-0 text-muted" @click="startOverPregeneratedScan">Clear Values & Start Over</button>
             <button class="bg-white text-center shadow border-radius-md d-flex align-items-center justify-content-center m-2 text-sm text-bold w-fit p-2 btn border-0 text-muted" @click="switchToUserSelectionMode">Exit Scanning Mode</button>
           </div>
         </div>
@@ -40,7 +40,7 @@
       <div class="row">
         <div class="col-12">
           <div class="nav nav-pills p-2 d-flex justify-content-end">
-            <button class="bg-white text-center shadow border-radius-md d-flex align-items-center justify-content-center m-2 text-sm text-bold w-fit p-2 btn border-0 text-muted" @click="startOverPregeneratedScan">Clear Values & Start OVer</button>
+            <button class="bg-white text-center shadow border-radius-md d-flex align-items-center justify-content-center m-2 text-sm text-bold w-fit p-2 btn border-0 text-muted" @click="startOverPregeneratedScan">Clear Values & Start Over</button>
             <button class="bg-white text-center shadow border-radius-md d-flex align-items-center justify-content-center m-2 text-sm text-bold w-fit p-2 btn border-0 text-muted" @click="switchToUserSelectionMode">Exit Scanning Mode</button>
           </div>
         </div>

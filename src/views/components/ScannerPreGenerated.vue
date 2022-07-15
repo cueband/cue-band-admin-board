@@ -35,7 +35,7 @@
         <div class="row p-4">
           <button class="btn text-lg" :disabled="saveButtonDisabled" @click="saveValues()" :class="saveButtonClass">
             {{ saveButtonText }}
-            <canvas ref="saveButtonCanvas" v-show="!saveButtonDisabled"></canvas>
+            <br v-show="!saveButtonDisabled"><canvas ref="saveButtonCanvas" v-show="!saveButtonDisabled"></canvas>
           </button> 
         </div>
 
@@ -179,7 +179,9 @@ export default {
       if (trackingData && trackingData.length > 0) {
         this.trackingData = trackingData[0];
         if (this.labelData && this.trackingData.id != this.labelData.id) this.trackingError = "Tracking code is already in use.";
-        else if (!this.labelData) this.labelCode = `cue${this.trackingData.id}`;
+        else if (!this.labelData) {
+          this.labelCode = `cue${this.trackingData.id}`
+        };
       }
 
       if (this.labelCode && this.isLabelCode(this.labelCode) && this.trackingCode && !this.boxNumber && !this.labelError && !this.trackingError) {
@@ -199,6 +201,7 @@ export default {
       if (boxData && boxData.length > 0) {
         this.boxData = boxData[0];
         if (this.labelData && this.boxData.get('user').id != this.labelData.get('user').id) this.warning = "This box number is assigned to a different user.";
+        else if (this.labelData && this.boxData.get('user').id == this.labelData.get('user').id) this.warning = "The box number has been assigned to this user before.";
       }
     }
   },
@@ -276,6 +279,7 @@ export default {
       return await api.getDeviceOrderByLabel(barcode);
     },
     async fetchTrackingCodeUser(barcode) {
+      if (!barcode) return [];
       return await api.getDeviceOrderByTrackingCode(barcode);
     },
     async fetchDeviceBox(deviceBox) {
