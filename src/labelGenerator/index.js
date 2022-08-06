@@ -48,7 +48,7 @@ export default {
         if (!chunks) continue;
         chunks.forEach(c => {
           let tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-          tspan.textContent = c.toUpperCase();
+          tspan.textContent = c;
           tspan.setAttributeNS(null, "y", currentLineStart);
           tspan.setAttributeNS(null, "x", 0);
           currentLineStart += lineSpacing;
@@ -90,7 +90,7 @@ export default {
         format: [105, 148]
       });
       const lineSpacing = 65;
-      const chunksRegex = /.{1,10}(\s|$)/g;
+      const chunksRegex = /.{1,25}(\s|$)/g;
       const svgElement = getLabelSvgElement();
       const addressToElementMap = {
         "shipping_address-name": "name",
@@ -108,7 +108,7 @@ export default {
         if (!chunks) continue;
         chunks.forEach(c => {
           let tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-          tspan.textContent = c.toUpperCase();
+          tspan.textContent = c;
           tspan.setAttributeNS(null, "y", currentLineStart);
           tspan.setAttributeNS(null, "x", 0);
           currentLineStart += lineSpacing;
@@ -142,7 +142,7 @@ export default {
         })
         
       doc.save('cb_' + label.id + '.pdf')  
-      return label;
+      return {label, pdf: doc.output('blob')};
     } catch (err) {
       console.log(err);
       return;

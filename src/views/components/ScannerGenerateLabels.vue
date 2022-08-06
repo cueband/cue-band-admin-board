@@ -56,6 +56,7 @@
         </div>
       </div>
     </div>
+    <iframe ref="pdfResultIframe" @load="onIframeLoaded" :src="pdfResultUrl" v-if="pdfResultUrl" width="1" height="1"></iframe>
   </div>
 </template>
 <script>
@@ -164,7 +165,7 @@ export default {
   data() {
     return {
       lastKeypress: 0,
-      keypressDelay: 60,
+      keypressDelay: 300,
       scannerInputText: "",
       trackingCode: null,
       labelCode: null,
@@ -182,6 +183,8 @@ export default {
       selectedUsersData: null,
       preparingScan: false,
       currentIndex: 0,
+      pdfResultUrl: null,
+      isPrinting: false
     };
   },
   methods: {
@@ -222,7 +225,7 @@ export default {
     isValidBoxNumber(text) {
       return (/^\d+$/.test(text) && text.length == 4);
     },
-    async enterTrackingMode (barcode) {
+    async enterTrackingMode(barcode) {
       this.isNewInput = false;
       if (this.isValidBoxNumber(barcode)) {
         this.boxNumber = barcode;
@@ -250,6 +253,23 @@ export default {
         return;
       }
     },
+    onIframeLoaded (event) {
+      // event.path[0].contentWindow.addEventListener("afterprint", this.onPrintFinished);
+      // console.log('loading iframe ' + event.path[0].src)
+      this.isPrinting = true;
+      event.path[0].contentWindow.focus();
+      event.path[0].contentWindow.print();
+      setTimeout(this.onPrintFinished, 1000);
+    },
+    onPrintFinished () {
+      console.log('print finished')
+      if (this.isPrinting) {
+        this.isPrinting = false;
+        // this.pdfResultUrl = null;
+        this.startNewInput();
+        this.currentIndex += 1;
+      }
+    },
     async saveValues() {
       if (this.saveButtonDisabled) return;
       if ( this.error || this.trackingError ) {
@@ -261,9 +281,9 @@ export default {
         let result = await labelGenerator.generateLabelFromTrackingCode(this.selectedUsersData[this.currentIndex], this.boxNumber, this.trackingCode);
 
         if (result) {
-          console.log(result)
-          this.startNewInput()
-          this.currentIndex += 1;
+          this.pdfResultUrl = URL.createObjectURL(result.pdf);
+          // this.startNewInput()
+          // this.currentIndex += 1;
         } else {
           this.error = "Failed to save values."
         }
@@ -299,7 +319,6 @@ export default {
       try {
         const selectedUsersIds = this.selectedUsers.map(s => this.$store.getters.getStudyDataById(s).get('user').id);
         this.selectedUsersData = await api.GetUsersDeliveryInfoByIdArr(selectedUsersIds);
-        console.log(this.selectedUsersData);
       } catch (err) {
         console.error(err);
       } finally {
