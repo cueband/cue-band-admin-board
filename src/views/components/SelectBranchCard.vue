@@ -25,24 +25,27 @@
                 <div>
                     <strong>Cueband-Phone:</strong> {{methodCounts.cuebandPhone}}
                 </div>
+                 <div>
+                    <strong>Random Allocation Order:</strong> {{randomAllocationOrder}}
+                </div>
             </div>
             <div style="margin-bottom: 30px">
                 <strong class="text-dark" style="margin-right: 20px">Cueing Method 1:</strong>
-                <input type="radio" id="CueingMethod1Phone" name="cueingMethod1" value="phone" v-model="selectedCueingMethod1"/>
+                <input type="radio" id="CueingMethod1Phone" name="cueingMethod1" value="phone" v-model="selectedCueingMethod1" disabled/>
                 <label for="CueingMethod1Phone" style="margin-right: 20px">Phone</label>
-                <input type="radio" id="CueingMethod1CueBand" name="cueingMethod1" value="cueband" v-model="selectedCueingMethod1"/>
+                <input type="radio" id="CueingMethod1CueBand" name="cueingMethod1" value="cueband" v-model="selectedCueingMethod1" disabled/>
                 <label for="CueingMethod1CueBand">CueBand</label>
             </div>
             <div style="margin-bottom: 30px">
                 <strong class="text-dark" style="margin-right: 20px">Cueing Method 2:</strong>
-                <input type="radio" id="CueingMethod2Phone" name="cueingMethod2" value="phone" v-model="selectedCueingMethod2"/>
+                <input type="radio" id="CueingMethod2Phone" name="cueingMethod2" value="phone" v-model="selectedCueingMethod2" disabled/>
                 <label for="CueingMethod2Phone" style="margin-right: 20px">Phone</label>
-                <input type="radio" id="CueingMethod2CueBand" name="cueingMethod2" value="cueband" v-model="selectedCueingMethod2"/>
+                <input type="radio" id="CueingMethod2CueBand" name="cueingMethod2" value="cueband" v-model="selectedCueingMethod2" disabled/>
                 <label for="CueingMethod2CueBand">CueBand</label>
             </div>
-            <div style="display: flex;justify-content: center;margin-bottom: 30px">
+            <!--div style="display: flex;justify-content: center;margin-bottom: 30px">
                 <button class="btn bg-gradient-success" @click="selectCueingMethodRandomly">Randomise Cueing Methods</button>
-            </div>
+            </div-->
         </div>
 
         <div style="display: flex;justify-content: center;">
@@ -69,6 +72,7 @@ export default {
     },
     data() {
         return {
+            currentRandomAllocation: null,
             selectedStudyBranch: null,
             selectedCueingMethod1: null,
             selectedCueingMethod2: null,
@@ -76,6 +80,7 @@ export default {
             isSavedSuccessfully: false,
             alertTimer: null,
             alertTimeoutPeriod: 3000,
+            randomAllocationOrder: -1,
         }
     },
     mounted () {
@@ -83,7 +88,7 @@ export default {
             this.selectedStudyBranch = this.info.studyDataObject.get("studyBranch");
             this.selectedCueingMethod1 = this.info.studyDataObject.get("cueingMethod1");
             this.selectedCueingMethod2 = this.info.studyDataObject.get("cueingMethod2");
-
+            this.getRandomAllocation();
         } catch (error) {
             // TODO: handle error properly
             return;
@@ -131,8 +136,19 @@ export default {
                 let confirmationEmailSuccess = true;
                 switch (this.selectedStudyBranch) {
                     case 'Trial':
-                        result = await api.SaveStudyDataState(this.info.studyDataObject, this.selectedStudyBranch, this.selectedCueingMethod1, this.selectedCueingMethod2);
-                        confirmationEmailSuccess = await api.SendConfirmationEmail(email);
+
+                        var userHasBeenAllocated = await api.UserHasBeenAllocated(this.info.studyDataObject.get('user'));
+                        if(userHasBeenAllocated) {
+                            result = false;
+                            console.log(userHasBeenAllocated);
+                        } else {
+                            console.log(userHasBeenAllocated);
+                            result = await api.SaveStudyDataState(this.info.studyDataObject, this.selectedStudyBranch, this.selectedCueingMethod1, this.selectedCueingMethod2);
+                            if(result) {
+                                confirmationEmailSuccess = await api.SendConfirmationEmail(email);
+                                result = await api.SaveRandomAllocation(this.info.studyDataObject.get('user'), this.currentRandomAllocation);
+                            }
+                        }
                         break;
                     case 'FreeLiving': case 'NoStudy':
                         result = await api.SaveStudyDataState(this.info.studyDataObject, this.selectedStudyBranch, null, null);
@@ -143,10 +159,45 @@ export default {
                 if (result && confirmationEmailSuccess) this.onSaveSuccessful();
                 else if (!result) this.onSaveError("An error occured while saving changes.");
                 else if (!confirmationEmailSuccess) this.onSaveError("Email could not be sent.");
+
+                await this.getRandomAllocation();
+
             } catch (error) {
                 this.onSaveError(`An error occured: ${error.message}`);
             }
         },
+        async getRandomAllocation() {
+            try {
+                let randomAllocation = await api.GetNextFreeRandomAllocation();
+                if(randomAllocation == null) {
+                    const numberOfExistingAllocations = await api.GetRandomAllocationCount();
+                    let nextRandomAllocationResult = await api.GenerateNextRandomAllocation(numberOfExistingAllocations == 0 ? 300 : 100);
+                    console.log(nextRandomAllocationResult);
+                    if(nextRandomAllocationResult) {
+                        console.log("A");
+                        randomAllocation = await api.GetNextFreeRandomAllocation();
+                    } else {
+                        console.log("C");
+                        return "false";
+                    }
+                }
+
+                console.log("B");
+
+                this.currentRandomAllocation = randomAllocation;
+                
+                let type = this.currentRandomAllocation.get('type');
+                console.log(type);
+                type = type.toLowerCase();
+                const splitTypes = type.split("-");
+                this.selectedCueingMethod1 = splitTypes[0];
+                this.selectedCueingMethod2 = splitTypes[1];
+                this.randomAllocationOrder = this.currentRandomAllocation.get('order');
+            
+            } catch(error) {
+                this.onSaveError(`An error occured: ${error.message}`);
+            }
+        }
 
     }
 };

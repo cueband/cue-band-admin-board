@@ -231,5 +231,46 @@ exports.SendConfirmationEmail = async(email) => {
         }
         return false;
     }
+}
 
+exports.UserHasBeenAllocated = async(user) => {
+    const RandomAllocation = Parse.Object.extend("RandomAllocation");
+    const query = new Parse.Query(RandomAllocation);
+    query.equalTo("user", user);
+    const randomAllocationResult = await query.find({useMasterKey: true});
+    return randomAllocationResult.length != 0;
+}
+
+exports.GetRandomAllocationCount = async() => {
+    const RandomAllocation = Parse.Object.extend("RandomAllocation");
+    const query = new Parse.Query(RandomAllocation);
+    return await query.count();
+}
+
+exports.GetNextFreeRandomAllocation = async() => {
+    const RandomAllocation = Parse.Object.extend("RandomAllocation");
+    const query = new Parse.Query(RandomAllocation);
+    query.equalTo("allocated", false);
+    query.ascending("order");
+    const randomAllocationResult = await query.find({useMasterKey: true});
+    if(randomAllocationResult.length == 0) {
+        return null;
+    } else {
+        return randomAllocationResult[0];
+    }
+}
+
+exports.GenerateNextRandomAllocation = async(nAllocations) => {
+    const result = await Parse.Cloud.run("generateRandomAllocations", {nAllocations});
+    return result;
+}
+
+exports.SaveRandomAllocation = async(user, randomAllocation) => {
+    if(user == null || randomAllocation == null) {
+        return null;
+    }
+    randomAllocation.set('user', user);
+    randomAllocation.set('allocated', true);
+    let result = await randomAllocation.save();
+    return result;
 }
