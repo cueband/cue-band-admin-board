@@ -136,7 +136,6 @@ export default {
                 let confirmationEmailSuccess = true;
                 switch (this.selectedStudyBranch) {
                     case 'Trial':
-
                         var userHasBeenAllocated = await api.UserHasBeenAllocated(this.info.studyDataObject.get('user'));
                         if(userHasBeenAllocated) {
                             result = false;
