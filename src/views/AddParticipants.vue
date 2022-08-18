@@ -296,17 +296,14 @@ export default {
           console.log(filtered);
 
           for(let i = 0; i < filtered.length; i++) {
-
             //check of email ready exists in the database
             var studyInterestExists = await api.CheckEmailExistsOnStudyInterest(filtered[i]['EMAIL'])
             console.log(studyInterestExists);
             //if not add it
             if(!studyInterestExists) {
+              console.log("user does not exist adding it now")
               await api.AddStudyInterest(filtered[i]);
             }
-
-            return;
-
           }
         };
         reader.onerror = (err) => console.log(err);

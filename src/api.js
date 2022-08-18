@@ -301,7 +301,7 @@ exports.AddStudyInterest = async(studyInterestObject) => {
         }
     
         if(studyInterestObject['consent_get_involved_activated']) {
-            studyInterest.set('activated', studyInterestObject['consent_get_involved_activated'] == "TRUE");
+            studyInterest.set('activated', studyInterestObject['consent_get_involved_activated'] == "true");
         }
     
         if(studyInterestObject['consent_get_involved_activation_token']) {
@@ -309,7 +309,7 @@ exports.AddStudyInterest = async(studyInterestObject) => {
         }
     
         if(studyInterestObject['consent_get_involved_formal_trial']) {
-            studyInterest.set('formalTrial', studyInterestObject['consent_get_involved_formal_trial'] == "TRUE");
+            studyInterest.set('formalTrial', studyInterestObject['consent_get_involved_formal_trial'] == "true");
         }
     
         if(studyInterestObject['consent_get_involved_smartphone_type']) {
@@ -317,7 +317,7 @@ exports.AddStudyInterest = async(studyInterestObject) => {
         }
     
         if(studyInterestObject['consent_get_involved_study']) {
-            studyInterest.set('study', studyInterestObject['consent_get_involved_study'] == "TRUE");
+            studyInterest.set('study', studyInterestObject['consent_get_involved_study'] == "true");
         }
     
         if(studyInterestObject['consent_get_involved_study_token']) {
