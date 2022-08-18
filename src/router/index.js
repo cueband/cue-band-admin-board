@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Dashboard from "@/views/Dashboard.vue";
+
 import Tables from "@/views/Tables.vue";
 import Billing from "@/views/Billing.vue";
 import VirtualReality from "@/views/VirtualReality.vue";
@@ -10,7 +11,7 @@ import SignUp from "@/views/SignUp.vue";
 import Users from "@/views/Users.vue";
 import UserDevices from "@/views/UserDevices.vue";
 import StudyDataPage from "@/views/StudyDataPage.vue"
-
+import AddParticipants from "@/views/AddParticipants.vue"
 
 const routes = [
   {
@@ -22,6 +23,11 @@ const routes = [
     path: "/user-devices",
     name: "User Devices",
     component: UserDevices,
+  },
+  {
+    path: "/add-participants",
+    name: "Add Participants",
+    component: AddParticipants,
   },
   {
     path: "/dashboard",

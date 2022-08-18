@@ -244,7 +244,7 @@ exports.UserHasBeenAllocated = async(user) => {
 exports.GetRandomAllocationCount = async() => {
     const RandomAllocation = Parse.Object.extend("RandomAllocation");
     const query = new Parse.Query(RandomAllocation);
-    return await query.count();
+    return await query.count({useMasterKey: true});
 }
 
 exports.GetNextFreeRandomAllocation = async() => {
@@ -261,7 +261,7 @@ exports.GetNextFreeRandomAllocation = async() => {
 }
 
 exports.GenerateNextRandomAllocation = async(nAllocations) => {
-    const result = await Parse.Cloud.run("generateRandomAllocations", {nAllocations});
+    const result = await Parse.Cloud.run("generateRandomAllocations", {nAllocations}, {useMasterKey: true});
     return result;
 }
 
@@ -271,6 +271,69 @@ exports.SaveRandomAllocation = async(user, randomAllocation) => {
     }
     randomAllocation.set('user', user);
     randomAllocation.set('allocated', true);
-    let result = await randomAllocation.save();
+    let result = await randomAllocation.save({useMasterKey: true});
     return result;
+}
+
+exports.CheckEmailExistsOnStudyInterest = async(email) => {
+    if(email == null || email == '') {
+        return false;
+    }
+    const StudyInterest = Parse.Object.extend("StudyInterest");
+    const query = new Parse.Query(StudyInterest);
+    query.equalTo("email", email);
+    const queryResult = await query.count({useMasterKey: true});
+
+    return queryResult > 0;
+}
+
+
+exports.AddStudyInterest = async(studyInterestObject) => {
+
+    try {
+
+        const StudyInterest = Parse.Object.extend("StudyInterest");
+        const studyInterest = new StudyInterest();
+
+        if(studyInterestObject['EMAIL']) {
+           
+            studyInterest.set('email', studyInterestObject['EMAIL']);
+        }
+    
+        if(studyInterestObject['consent_get_involved_activated']) {
+            studyInterest.set('activated', studyInterestObject['consent_get_involved_activated'] == "TRUE");
+        }
+    
+        if(studyInterestObject['consent_get_involved_activation_token']) {
+            studyInterest.set('activationToken', studyInterestObject['consent_get_involved_activation_token']);
+        }
+    
+        if(studyInterestObject['consent_get_involved_formal_trial']) {
+            studyInterest.set('formalTrial', studyInterestObject['consent_get_involved_formal_trial'] == "TRUE");
+        }
+    
+        if(studyInterestObject['consent_get_involved_smartphone_type']) {
+            studyInterest.set('smartphoneType', studyInterestObject['consent_get_involved_smartphone_type']);
+        }
+    
+        if(studyInterestObject['consent_get_involved_study']) {
+            studyInterest.set('study', studyInterestObject['consent_get_involved_study'] == "TRUE");
+        }
+    
+        if(studyInterestObject['consent_get_involved_study_token']) {
+            studyInterest.set('studyToken', studyInterestObject['consent_get_involved_study_token']);
+        }
+    
+        const studyInterestACL = new Parse.ACL();
+        studyInterestACL.setPublicReadAccess(false);
+        studyInterest.setACL(studyInterestACL);
+        let studyInterestSave = await studyInterest.save({},{useMasterKey: true});
+        console.log(studyInterest);
+        console.log(studyInterestSave);
+        return studyInterestSave;
+    } catch(e) {
+        console.log(e);
+    }
+
+
 }
