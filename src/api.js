@@ -8,6 +8,41 @@ Parse.serverURL = process.env.VUE_APP_SERVER_URL
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.VUE_APP_SENDGRID_API_KEY);
 
+// const DELIVERY_PROGRESS_AWAITING_PROCESSING = "Awaiting processing";
+const DELIVERY_PROGRESS_DEVICE_SENT = "Device Sent";
+
+const isDeviceSent = (label) => {
+    return label.get("trackingCode") && label.get("deviceBox");
+}
+
+const setDeviceSentProgress = async (label) => {
+    const StudyData = Parse.Object.extend("StudyData");
+    const query = new Parse.Query(StudyData);
+    query.equalTo("user", label.get("user"));
+    const results = await query.find({useMasterKey: true});
+    for (let result of results) {
+        result.set("deliveryProgress", DELIVERY_PROGRESS_DEVICE_SENT);
+        await result.save({}, {useMasterKey: true});
+    }
+
+    /* 
+    TODO: Implement email function
+    await sendDeviceSentEmail(label.get("user").get("email"), label.get("address"), label.get("trackingCode"));
+    */
+} 
+
+exports.setDeviceOrderExported = async (rowIds) => {
+    const DeviceOrderSchema = Parse.Object.extend("DeviceOrderSchema");
+    const query = new Parse.Query(DeviceOrderSchema);
+    query.containedIn("objectId", rowIds);
+    const results = await query.find({useMasterKey: true});
+    console.log(results);
+    for (let result of results) {
+        result.set("isReportExported", true);
+        await result.save({}, {useMasterKey: true});
+    }
+} 
+
 exports.GetUsers = async () => {
     const User = Parse.Object.extend("User");
     const query = new Parse.Query(User);
@@ -18,6 +53,41 @@ exports.GetUsers = async () => {
 exports.GetStudyData = async () => {
     const StudyData = Parse.Object.extend("StudyData");
     const query = new Parse.Query(StudyData);
+    const results = await query.find({useMasterKey: true});
+    return results;
+}
+
+exports.getConsentReports = async () => {
+    const ConsentReports = Parse.Object.extend("ConsentReport");
+    const query = new Parse.Query(ConsentReports);
+    const results = await query.find();
+    return results;
+}
+
+exports.getDeviceOrderReports = async () => {
+    const DeviceOrderReport = Parse.Object.extend("DeviceOrderReport");
+    const query = new Parse.Query(DeviceOrderReport);
+    const results = await query.find();
+    return results;
+}
+
+exports.GetUnexportedDeviceOrderCounts = async () => {
+    const DeviceOrderSchema = Parse.Object.extend("DeviceOrderSchema");
+    const query = new Parse.Query(DeviceOrderSchema);
+    query.containedIn("isReportExported", [false, null]);
+    query.notEqualTo("trackingCode", null);
+    query.notEqualTo("deviceBox", null);
+    const count = await query.count({useMasterKey: true});
+    return count;
+}
+
+exports.GetUnexportedDeviceOrders = async () => {
+    const DeviceOrderSchema = Parse.Object.extend("DeviceOrderSchema");
+    const query = new Parse.Query(DeviceOrderSchema);
+    query.containedIn("isReportExported", [false, null]);
+    query.notEqualTo("trackingCode", null);
+    query.notEqualTo("deviceBox", null);
+    query.ascending("updatedAt");
     const results = await query.find({useMasterKey: true});
     return results;
 }
@@ -164,10 +234,14 @@ exports.saveLabelTrackingCodeData = async ({labelObject, trackingCode, boxNumber
     if (trackingCode) labelObject.set("trackingCode", trackingCode);
     labelObject.set("deviceBox", deviceBoxId);
     let result = await labelObject.save({}, { useMasterKey: true });
+
+    if (isDeviceSent(labelObject)) {
+        await setDeviceSentProgress(labelObject);
+    }
     return result;
 }
 
-exports.saveAddressLabel = async ({trackingCode, user, labelId, address, boxNumber}) => {
+exports.saveAddressLabel = async ({trackingCode, user, labelId, name, address, boxNumber}) => {
     let deviceBoxId = null;
     if (boxNumber){
         const DeviceBox = Parse.Object.extend("DeviceBoxSchema");
@@ -193,17 +267,21 @@ exports.saveAddressLabel = async ({trackingCode, user, labelId, address, boxNumb
     const DeviceOrder = Parse.Object.extend("DeviceOrderSchema");
     const deviceOrder = new DeviceOrder();
     deviceOrder.set('user', user);
+    if (name) deviceOrder.set('name', name);
     if (address) deviceOrder.set('address', address);
     if (trackingCode) deviceOrder.set('trackingCode', trackingCode);
     if (deviceBoxId) deviceOrder.set('deviceBox', deviceBoxId);
     if (labelId) deviceOrder.set('labelId', labelId);
 
-    const deviceOrderACL = new Parse.ACL();
+    const deviceOrderACL = new Parse.ACL(user);
     deviceOrderACL.setPublicReadAccess(false);
     deviceOrder.setACL(deviceOrderACL);
     let deviceOrderSave = await deviceOrder.save();
     console.log(deviceOrder);
     console.log(deviceOrderSave);
+    if (isDeviceSent(deviceOrder)) {
+        setDeviceSentProgress(deviceOrder);
+    }
     return deviceOrderSave;
 }
 
@@ -273,6 +351,28 @@ exports.SaveRandomAllocation = async(user, randomAllocation) => {
     randomAllocation.set('allocated', true);
     let result = await randomAllocation.save({useMasterKey: true});
     return result;
+}
+
+exports.SaveDeviceOrderReport = async ({ file, filename, startDate, endDate }) => {
+    try {
+        const parseFile = new Parse.File(filename, file);
+        let saveFileResult = await parseFile.save();
+        if (saveFileResult.code != null) {
+            return;
+        }
+  
+        console.log(parseFile.url());
+        console.log("The file has been saved to Parse.")
+        const DeviceOrderReport = Parse.Object.extend("DeviceOrderReport");
+        const DeviceOrderReportObject = new DeviceOrderReport();
+        DeviceOrderReportObject.set("startDate", startDate);
+        DeviceOrderReportObject.set("endDate", endDate);
+        DeviceOrderReportObject.set("csvFile", parseFile);
+        await DeviceOrderReportObject.save();
+        return DeviceOrderReportObject;
+    } catch(e) {
+        console.log("The file either could not be read, or could not be saved to Parse.", e)
+    }
 }
 
 exports.CheckEmailExistsOnStudyInterest = async(email) => {

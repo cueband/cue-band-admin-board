@@ -62,7 +62,7 @@
 <script>
 import api from "@/api";
 import SoftAlert from "@/components/VsudAlert.vue";
-import labelGenerator from "@/labelGenerator/";
+import labelGenerator from "@/utils/labelGenerator/";
 
 export default {
   name: "scanner-mode",

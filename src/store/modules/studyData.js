@@ -8,7 +8,7 @@ const state = {
 const getters = {
     allStudyData: (state) => state.studyData,
     studyDataAwaitingApproval: (state) => state.studyData.filter(s => ( s.get("currentState") == "WaitingForBranchApproval")),
-    studyDataAwaitingDevice: (state) => state.studyData.filter(s => ( s.get("currentState") == "WaitingForDevice")),
+    studyDataAwaitingDevice: (state) => state.studyData.filter(s => ( s.get("currentState") == "WaitingForDevice" && s.get("deliveryProgress") == "Awaiting processing")),
     studyDataNoStudy: (state) => state.studyData.filter(s => ( s.get("studyBranch") == "NoStudy")),
     studyDataTrial: (state) => state.studyData.filter(s => ( s.get("studyBranch") == "Trial")),
     studyDataFreeLiving: (state) => state.studyData.filter(s => ( s.get("studyBranch") == "FreeLiving")),
@@ -23,7 +23,6 @@ const getters = {
 const actions = {
     async fetchStudyData({ commit }) {
         const response = await API.GetStudyData();
-    
         console.log(response);
         commit('setStudyData', response);
     }, 

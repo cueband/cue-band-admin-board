@@ -10,6 +10,8 @@ import SignIn from "@/views/SignIn.vue";
 import SignUp from "@/views/SignUp.vue";
 import Users from "@/views/Users.vue";
 import UserDevices from "@/views/UserDevices.vue";
+import UserDeviceReports from "@/views/UserDeviceReports.vue";
+import ConsentReports from "@/views/ConsentReports.vue";
 import StudyDataPage from "@/views/StudyDataPage.vue"
 import AddParticipants from "@/views/AddParticipants.vue"
 
@@ -23,6 +25,16 @@ const routes = [
     path: "/user-devices",
     name: "User Devices",
     component: UserDevices,
+  },
+  {
+    path: "/user-device-reports",
+    name: "User Device Reports",
+    component: UserDeviceReports,
+  },
+  {
+    path: "/consent-reports",
+    name: "Consent Reports",
+    component: ConsentReports,
   },
   {
     path: "/add-participants",

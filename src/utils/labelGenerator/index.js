@@ -3,7 +3,7 @@ import { jsPDF } from "jspdf";
 import "svg2pdf.js";
 import JsBarcode from "jsbarcode";
 import { getLabelSvgElement } from "./label.js";
-import api from '../api';
+import api from '../../api';
 import callAddFontNormal from './PTSans-normal';
 import callAddFontBold from './PTSans-bold';
 
@@ -58,7 +58,8 @@ export default {
       
       let label = await api.saveAddressLabel({
         user: addressData.get("user"),
-        address: [addressData.get("name") || "", addressData.get("addressLine1") || "", addressData.get("addressLine2") || "", addressData.get("city") || "", addressData.get("postcode") || ""].join('\n'),
+        name: addressData.get("name"),
+        address: [addressData.get("addressLine1") || "", addressData.get("addressLine2") || "", addressData.get("city") || "", addressData.get("postcode") || ""].join('\n'),
       })
       let canv = document.createElement('canvas');
       JsBarcode(canv, `cue${label.id}`, {
@@ -122,7 +123,8 @@ export default {
         trackingCode,
         boxNumber,
         user: addressData.get("user"),
-        address: [addressData.get("name") || "", addressData.get("addressLine1") || "", addressData.get("addressLine2") || "", addressData.get("city") || "", addressData.get("postcode") || ""].join('\n'),
+        name: addressData.get("name"),
+        address: [addressData.get("addressLine1") || "", addressData.get("addressLine2") || "", addressData.get("city") || "", addressData.get("postcode") || ""].join('\n'),
       })
       var canv = document.createElement('canvas');
       JsBarcode(canv, `cue${label.id}`, {

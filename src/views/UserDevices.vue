@@ -51,7 +51,7 @@
 </template>
 <script>
 import api from "@/api";
-import labelGenerator from "@/labelGenerator/";
+import labelGenerator from "@/utils/labelGenerator/";
 import { mapGetters, mapActions } from "vuex";
 import StudyDataTable from "@/components/cueband/StudyDataTable.vue";
 import {
@@ -104,9 +104,9 @@ export default {
       ],
       pillTabsMap: null,
       selectedTab: {
-        name: "All Users",
-        id: "allusers", 
-        dataSource: "allStudyData"
+        name: "Awaiting Device",
+        id: "awaitingdevice", 
+        dataSource: "studyDataAwaitingDevice"
       },
     };
   },
@@ -148,6 +148,8 @@ export default {
     },
     switchToUserSelectionMode() {
       this.selectedUsers = [];
+      this.fetchStudyData();
+      this.fetchMethodCounts();
       this.editingMode = this.editingModes.USER_SELECT;
     },
     startOverPregeneratedScan() {

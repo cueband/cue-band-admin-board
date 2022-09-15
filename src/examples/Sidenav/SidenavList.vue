@@ -12,6 +12,20 @@
         </sidenav-collapse>
       </li>
       <li class="nav-item">
+        <sidenav-collapse navText="Add Participants" :to="{ name: 'Add Participants' }">
+          <template #icon>
+            <box3d />
+          </template>
+        </sidenav-collapse>
+      </li>
+      <li class="nav-item">
+        <sidenav-collapse navText="Consent Reports" :to="{ name: 'Consent Reports' }">
+          <template #icon>
+            <document />
+          </template>
+        </sidenav-collapse>
+      </li>
+      <li class="nav-item">
         <sidenav-collapse navText="User Devices" :to="{ name: 'User Devices' }">
           <template #icon>
             <box3d />
@@ -19,9 +33,9 @@
         </sidenav-collapse>
       </li>
       <li class="nav-item">
-        <sidenav-collapse navText="Add Participants" :to="{ name: 'Add Participants' }">
+        <sidenav-collapse navText="User Device Reports" :to="{ name: 'User Device Reports' }">
           <template #icon>
-            <box3d />
+            <document />
           </template>
         </sidenav-collapse>
       </li>

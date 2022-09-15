@@ -22,6 +22,9 @@
               <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">
                 Study State
               </th>
+              <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">
+                Delivery Progress
+              </th>
               <th v-if="!isSelectable">
 
               </th>
@@ -48,6 +51,11 @@
               <td class="align-middle text-center">
                 <div class="d-flex align-items-center justify-content-center">
                   <span class="me-2 text-xs font-weight-bold">{{studyData.get("currentState")}}</span>
+                </div>
+              </td>
+              <td class="align-middle text-center">
+                <div class="d-flex align-items-center justify-content-center">
+                  <span class="me-2 text-xs font-weight-bold">{{studyData.get("deliveryProgress")}}</span>
                 </div>
               </td>
               <td class="align-middle" v-if="!isSelectable">
