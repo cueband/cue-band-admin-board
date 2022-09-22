@@ -144,14 +144,21 @@ export default {
                             console.log(userHasBeenAllocated);
                             result = await api.SaveStudyDataState(this.info.studyDataObject, this.selectedStudyBranch, this.selectedCueingMethod1, this.selectedCueingMethod2);
                             if(result) {
-                                confirmationEmailSuccess = await api.SendConfirmationEmail(email);
+                                confirmationEmailSuccess = await api.SendBranchEmail(email, "trial");
                                 result = await api.SaveRandomAllocation(this.info.studyDataObject.get('user'), this.currentRandomAllocation);
                             }
                         }
                         break;
-                    case 'FreeLiving': case 'NoStudy':
+
+                    case 'FreeLiving': 
+                        result = await api.SaveStudyDataState(this.info.studyDataObject, this.selectedStudyBranch, null, null);
+                        confirmationEmailSuccess = await api.SendBranchEmail(email, "freeliving");
+                        break;
+
+                    case 'NoStudy':
                         result = await api.SaveStudyDataState(this.info.studyDataObject, this.selectedStudyBranch, null, null);
                         break;
+
                     default:
                         this.onSaveError("Please select a study branch");
                 }
