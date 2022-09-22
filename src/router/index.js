@@ -15,6 +15,7 @@ import ConsentReports from "@/views/ConsentReports.vue";
 import StudyDataPage from "@/views/StudyDataPage.vue"
 import AddParticipants from "@/views/AddParticipants.vue"
 import StudyStartingEmails from "@/views/StudyStartingEmails.vue"
+import SendStartEmail from "@/views/SendStartEmail.vue"
 
 const routes = [
   {
@@ -46,6 +47,10 @@ const routes = [
     path: "/study-start",
     name: "Study Starting Emails",
     component: StudyStartingEmails,
+  }, {
+    path: "/send-start-email",
+    name: "Send Start Email",
+    component: SendStartEmail
   },
   {
     path: "/dashboard",

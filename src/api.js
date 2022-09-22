@@ -16,20 +16,29 @@ const isDeviceSent = (label) => {
 }
 
 const setDeviceSentProgress = async (label) => {
+    var date = new Date().toUTCString();
     const StudyData = Parse.Object.extend("StudyData");
     const query = new Parse.Query(StudyData);
     query.equalTo("user", label.get("user"));
     const results = await query.find({useMasterKey: true});
     for (let result of results) {
         result.set("deliveryProgress", DELIVERY_PROGRESS_DEVICE_SENT);
+        result.set("serverLastUpdate", new Date(date));
         await result.save({}, {useMasterKey: true});
     }
 
-    /* 
-    TODO: Implement email function
-    await sendDeviceSentEmail(label.get("user").get("email"), label.get("address"), label.get("trackingCode"));
-    */
+    //EMAIL
+    await sendDeviceSentEmail(label.get("user").get("email"), label.get("address"), label.get("trackingCode"));    
 } 
+
+const sendDeviceSentEmail = async (email, address, trackingCode) => {
+    try {
+        const result = await Parse.Cloud.run("sendDeviceSentEmail", {email, address, trackingCode}, {useMasterKey: true});
+        return result.code == 200;
+    } catch(e) {
+        return false;
+    }
+}
 
 exports.setDeviceOrderExported = async (rowIds) => {
     const DeviceOrderSchema = Parse.Object.extend("DeviceOrderSchema");
@@ -329,30 +338,10 @@ exports.saveAddressLabel = async ({trackingCode, user, labelId, name, address, b
     return deviceOrderSave;
 }
 
-exports.SendConfirmationEmail = async(email) => {
+exports.SendBranchEmail = async(email, branch) => {
    
-    const emailBody = {
-        to: email,
-        from: process.env.VUE_APP_EMAIL_SENDER,
-        templateId: process.env.VUE_APP_TEMPLATE_ID,
-        dynamicTemplateData: {
-            email,
-        },
-    }
-
-    try {
-        console.log(emailBody);
-        // TODO: uncomment the following line and fix email sending
-        // const result = await sgMail.send(emailBody);
-        // console.log(result);
-        return true;
-    } catch (error) {
-        console.error(error);
-        if (error.response) {
-            console.error(error.response.body)
-        }
-        return false;
-    }
+    const result = await Parse.Cloud.run("sendBranchEmail", {email, branch}, {useMasterKey: true});
+    return result.code == 200;
 }
 
 exports.UserHasBeenAllocated = async(user) => {
@@ -478,6 +467,36 @@ exports.AddStudyInterest = async(studyInterestObject) => {
     } catch(e) {
         console.log(e);
     }
+}
 
+
+exports.SendStartEmail = async(email) => {
+   
+    if(email == null || email == '') {
+        return false;
+    }
+    const StudyInterest = Parse.Object.extend("StudyInterest");
+    const query = new Parse.Query(StudyInterest);
+    query.equalTo("email", email);
+    const queryResult = await query.find({useMasterKey: true});
+
+    console.log(queryResult);
+
+    if(queryResult.length != 0) {
+        let first = queryResult[0];
+
+        let data = {
+            email: first.get("email"),
+            smartphoneType: first.get("smartphoneType"),
+            studyToken: first.get("studyToken"),
+            link: first.get("smartphoneType") == "android" ? "https://play.google.com/store/apps/details?id=band.cue.app" : "no link"
+        };
+
+        const result = await Parse.Cloud.run("sendStudyStartEmail", data, {useMasterKey: true});
+
+        console.log(result);
+
+        return result.code == 200;
+    } 
 
 }
