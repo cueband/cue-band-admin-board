@@ -180,6 +180,50 @@ exports.GetCueingMethodCounts = async () => {
     };
 } 
 
+exports.GetUserStudyEmailCounts = async () => {
+    const StudyInterest = Parse.Object.extend("StudyInterest");
+    const studyInterestQuery = new Parse.Query(StudyInterest);
+    studyInterestQuery.equalTo("activated", true);
+    const studyInterestCount = await studyInterestQuery.count({useMasterKey: true});
+
+    const androidStudyInterestQuery = new Parse.Query(StudyInterest);
+    androidStudyInterestQuery.equalTo("activated", true)
+    androidStudyInterestQuery.equalTo("smartphoneType", "android")
+    const androidStudyInterestCount = await androidStudyInterestQuery.count({useMasterKey: true});
+
+    const iOSStudyInterestQuery = new Parse.Query(StudyInterest);
+    iOSStudyInterestQuery.equalTo("activated", true)
+    iOSStudyInterestQuery.equalTo("smartphoneType", "ios")
+    const iOSStudyInterestCount = await iOSStudyInterestQuery.count({useMasterKey: true});
+
+    const UserStudyEmail = Parse.Object.extend("UserStudyEmail");
+    const UserStudyEmailQuery = new Parse.Query(UserStudyEmail);
+    const userStudyEmailCount = await UserStudyEmailQuery.count({useMasterKey: true});
+
+    const androidUserStudyEmailQuery = new Parse.Query(UserStudyEmail);
+    androidUserStudyEmailQuery.equalTo("studyInterest.smartphoneType", "android")
+    const androidUserStudyEmailCount = await androidUserStudyEmailQuery.count({useMasterKey: true});
+
+    const iOSUserStudyEmailQuery = new Parse.Query(UserStudyEmail);
+    iOSUserStudyEmailQuery.equalTo("studyInterest.smartphoneType", "ios")
+    const iOSUserStudyEmailCount = await iOSUserStudyEmailQuery.count({useMasterKey: true});
+
+    return {
+        android: {
+            totalUserCount: androidStudyInterestCount,
+            studyEmailUserCount: androidUserStudyEmailCount
+        },
+        ios: {
+            totalUserCount: iOSStudyInterestCount,
+            studyEmailUserCount: iOSUserStudyEmailCount
+        },
+        total: {
+            totalUserCount: studyInterestCount,
+            studyEmailUserCount: userStudyEmailCount
+        }
+    }
+}
+
 
 exports.SaveStudyDataState = async (studyDataObject, branch, cueingMethod1, cueingMethod2) => {
 

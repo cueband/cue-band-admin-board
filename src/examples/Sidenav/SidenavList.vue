@@ -40,6 +40,13 @@
         </sidenav-collapse>
       </li>
       <li class="nav-item">
+        <sidenav-collapse navText="Study Starting Emails" :to="{ name: 'Study Starting Emails' }">
+          <template #icon>
+            <document />
+          </template>
+        </sidenav-collapse>
+      </li>
+      <!-- <li class="nav-item">
         <sidenav-collapse navText="Dashboard" :to="{ name: 'Dashboard' }">
           <template #icon>
             <shop />
@@ -59,7 +66,7 @@
             <credit-card />
           </template>
         </sidenav-collapse>
-      </li>
+      </li> 
 
       <li class="nav-item">
         <sidenav-collapse
@@ -106,7 +113,7 @@
             <spaceship />
           </template>
         </sidenav-collapse>
-      </li>
+      </li>-->
     </ul>
   </div>
   <div class="pt-3 mx-3 mt-3 sidenav-footer">
@@ -130,13 +137,13 @@
 import SidenavCollapse from "./SidenavCollapse.vue";
 import SidenavCard from "./SidenavCard.vue";
 import Shop from "../../components/Icon/Shop.vue";
-import Office from "../../components/Icon/Office.vue";
-import CreditCard from "../../components/Icon/CreditCard.vue";
+// import Office from "../../components/Icon/Office.vue";
+// import CreditCard from "../../components/Icon/CreditCard.vue";
 import Box3d from "../../components/Icon/Box3d.vue";
-import CustomerSupport from "../../components/Icon/CustomerSupport.vue";
+// import CustomerSupport from "../../components/Icon/CustomerSupport.vue";
 import Document from "../../components/Icon/Document.vue";
-import Spaceship from "../../components/Icon/Spaceship.vue";
-import Settings from "../../components/Icon/Settings.vue";
+// import Spaceship from "../../components/Icon/Spaceship.vue";
+// import Settings from "../../components/Icon/Settings.vue";
 
 export default {
   name: "SidenavList",
@@ -154,13 +161,13 @@ export default {
     SidenavCollapse,
     SidenavCard,
     Shop,
-    Office,
-    CreditCard,
+    // Office,
+    // CreditCard,
     Box3d,
-    CustomerSupport,
+    // CustomerSupport,
     Document,
-    Spaceship,
-    Settings,
+    // Spaceship,
+    // Settings,
   },
   methods: {
     getRoute() {
