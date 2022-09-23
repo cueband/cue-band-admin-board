@@ -233,6 +233,22 @@ exports.GetUserStudyEmailCounts = async () => {
     }
 }
 
+exports.GetUserForFirstStudyEmail = async (type, limit) => {
+    const UserStudyEmail = Parse.Object.extend("UserStudyEmail");
+    const userStudyEmailQuery = new Parse.Query(UserStudyEmail);
+    userStudyEmailQuery.select("studyInterest");
+    const userStudyEmailIds = await userStudyEmailQuery.find({useMasterKey: true});
+    const StudyInterest = Parse.Object.extend("StudyInterest");
+    const studyInterestQuery = new Parse.Query(StudyInterest);
+    studyInterestQuery.equalTo("activated", true);
+    if (type != "all") studyInterestQuery.equalTo("smartphoneType", type);
+    studyInterestQuery.notContainedIn("objectId", userStudyEmailIds.map(e => e.get("studyInterest").id));
+    studyInterestQuery.limit(limit);
+    studyInterestQuery.ascending("createdAt");
+    const studyInterestUsers = await studyInterestQuery.find({useMasterKey: true});
+    return studyInterestUsers;
+}
+
 
 exports.SaveStudyDataState = async (studyDataObject, branch, cueingMethod1, cueingMethod2) => {
 
@@ -467,6 +483,53 @@ exports.AddStudyInterest = async(studyInterestObject) => {
     } catch(e) {
         console.log(e);
     }
+}
+
+exports.sendUserStartEmail = async (selectedStudyInterest) => {
+    selectedStudyInterest.map(studyInterest => {
+        this.SendStartEmail(studyInterest.get("email")).then(async (result) => {
+            if (!result) {
+                console.log('Error connecting to server')
+            }
+            const UserStudyEmail = Parse.Object.extend("UserStudyEmail");
+            const userStudyEmail = new UserStudyEmail();
+            userStudyEmail.set('studyInterest', studyInterest);
+            const userStudyEmailACL = new Parse.ACL();
+            userStudyEmailACL.setPublicReadAccess(false);
+            userStudyEmail.setACL(userStudyEmailACL);
+            await userStudyEmail.save();
+        }).catch(err => {
+            console.log('Error sending to ' + studyInterest.get("email"));
+            console.log(err);
+        })
+    })
+}
+
+exports.SendStartEmailTest = async (email) => {
+    if(email == null || email == '') {
+        return false;
+    }
+    const StudyInterest = Parse.Object.extend("StudyInterest");
+    const query = new Parse.Query(StudyInterest);
+    query.equalTo("email", email);
+    const queryResult = await query.find({useMasterKey: true});
+
+    console.log(queryResult);
+
+    if(queryResult.length != 0) {
+        let first = queryResult[0];
+
+        let data = {
+            email: first.get("email"),
+            smartphoneType: first.get("smartphoneType"),
+            studyToken: first.get("studyToken"),
+            link: first.get("smartphoneType") == "android" ? "https://play.google.com/store/apps/details?id=band.cue.app" : "no link"
+        };
+
+        console.log(data);
+
+        return true;
+    } 
 }
 
 
