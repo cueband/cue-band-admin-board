@@ -25,18 +25,10 @@ const setDeviceSentProgress = async (label) => {
         result.set("deliveryProgress", DELIVERY_PROGRESS_DEVICE_SENT);
         result.set("serverLastUpdate", new Date(date));
         await result.save({}, {useMasterKey: true});
+
+        //EMAIL
+        await sendDeviceSentEmail(result.get("insertTokenEmail"), label.get("address"), label.get("trackingCode"));  
     }
-
-    const studyToken = results.get("insertTokenToken");
-    const StudyInterest = Parse.Object.extend("StudyInterest");
-    const studyInterestQuery = new Parse.Query(StudyInterest);
-    studyInterestQuery.equalTo("studyToken", studyToken);
-    const studyInterestResults = await studyInterestQuery.find({useMasterKey: true});
-    const userEmail = studyInterestResults.get("email");
-    console.log(userEmail)
-
-    //EMAIL
-    await sendDeviceSentEmail(userEmail, label.get("address"), label.get("trackingCode"));    
 } 
 
 const sendDeviceSentEmail = async (email, address, trackingCode) => {
