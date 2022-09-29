@@ -294,7 +294,7 @@ exports.saveLabelTrackingCodeData = async ({labelObject, trackingCode, boxNumber
         const deviceBoxACL = new Parse.ACL();
         deviceBoxACL.setPublicReadAccess(false);
         deviceBox.setACL(deviceBoxACL);
-        const deviceBoxSave = await deviceBox.save();
+        const deviceBoxSave = await deviceBox.save({}, {useMasterKey: true});
         deviceBoxId = deviceBoxSave.id;
     } else {
         deviceBoxId = boxResults[0].id;
@@ -398,7 +398,7 @@ exports.SaveRandomAllocation = async(user, randomAllocation) => {
     }
     randomAllocation.set('user', user);
     randomAllocation.set('allocated', true);
-    let result = await randomAllocation.save({useMasterKey: true});
+    let result = await randomAllocation.save({}, {useMasterKey: true});
     return result;
 }
 
@@ -561,5 +561,67 @@ exports.SendStartEmail = async(email) => {
 
         return result.code == 200;
     } 
+
+}
+
+const randomIntFromInterval = (min, max) => { // min and max included 
+    return Math.floor(Math.random() * (max - min + 1) + min)
+  }
+
+exports.ResetStudyTokens = async() => {
+
+    const StudyInterest = Parse.Object.extend("StudyInterest");
+    const query = new Parse.Query(StudyInterest);
+    query.limit(1000);
+    query.equalTo("activated", true);
+    const queryResult = await query.find({useMasterKey: true});
+
+    console.log(queryResult.length);
+
+    for(let studyInterest of queryResult) {
+        let studyToken = studyInterest.get('studyToken');
+        console.log(studyToken);
+        if(studyToken == null) {
+            continue;
+        }
+
+        if(isNaN(studyToken)) {
+
+            let tokenString  = null;
+            let tokenExists = true;
+            while(tokenExists) {
+              tokenString = `${randomIntFromInterval(100000, 999999)}`;
+              const query = new Parse.Query("Token");
+              query.equalTo("token", tokenString);
+              query.limit(1000);
+              const results = await query.find({useMasterKey: true});
+              tokenExists = results.length != 0
+            }
+          
+            const Token = Parse.Object.extend("Token");
+            const tokenObject = new Token();
+          
+            const tokenObjectACL = new Parse.ACL();
+            tokenObjectACL.setPublicReadAccess(false);
+            tokenObject.setACL(tokenObjectACL);
+            tokenObject.set("token", tokenString);
+            const numberOfDaysUntilExpire = 7
+            const expireDate = new Date(); 
+            expireDate.setDate(expireDate.getDate() + numberOfDaysUntilExpire);
+            tokenObject.set("expireDate", expireDate);
+          
+            await tokenObject.save({}, {useMasterKey: true});
+        
+            
+            studyInterest.set('studyToken', tokenString);
+
+            studyInterest.save({}, {useMasterKey: true});
+
+    
+        }
+
+    }
+
+    console.log("done");
 
 }

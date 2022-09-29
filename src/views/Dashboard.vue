@@ -2,6 +2,7 @@
   <div class="py-4 container-fluid">
     <div class="row">
       <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <!--button @click="ResetStudyTokens">Change Study Tokens</button-->
         <mini-statistics-card
           title="Today's Money"
           value="$53,000"
@@ -295,6 +296,9 @@ import US from "../assets/img/icons/flags/US.png";
 import DE from "../assets/img/icons/flags/DE.png";
 import GB from "../assets/img/icons/flags/GB.png";
 import BR from "../assets/img/icons/flags/BR.png";
+
+import api from "@/api";
+
 import {
   faHandPointer,
   faUsers,
@@ -350,5 +354,10 @@ export default {
     TimelineList,
     TimelineItem,
   },
+  methods: {
+    async ResetStudyTokens() {
+      await api.ResetStudyTokens();
+    }
+  }
 };
 </script>
