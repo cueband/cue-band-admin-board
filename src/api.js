@@ -533,6 +533,26 @@ exports.SendStartEmailTest = async (email) => {
 }
 
 
+exports.SentTokenToPublic = async () => {
+    
+    const Token = Parse.Object.extend("Token");
+    const query = new Parse.Query(Token);
+    query.limit(5000);
+    const queryResult = await query.find({useMasterKey: true});
+    console.log(queryResult);
+
+
+    for(let element of queryResult) {
+        const tokenObjectACL = new Parse.ACL();
+        tokenObjectACL.setPublicReadAccess(true);
+        element.setACL(tokenObjectACL);
+        let result = await element.save({}, {useMasterKey: true});
+        console.log(result);
+    }
+
+}
+
+
 exports.SendStartEmail = async(email) => {
    
     if(email == null || email == '') {

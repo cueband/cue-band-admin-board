@@ -33,6 +33,14 @@
           <strong class="text-dark">Gender:</strong> &nbsp;
           {{ info.demographicsDataObject.get("gender")}}
         </li>
+        <li class="pt-0 text-sm border-0 list-group-item ps-0">
+          <strong class="text-dark">Has Parkinsons: </strong> &nbsp;
+          {{ info.demographicsDataObject.get("parkinsons")}}
+        </li>
+        <li class="pt-0 text-sm border-0 list-group-item ps-0">
+          <strong class="text-dark">Has Drooling: </strong> &nbsp;
+          {{ info.demographicsDataObject.get("drooling")}}
+        </li>
       </ul>
     </div>
   </div>

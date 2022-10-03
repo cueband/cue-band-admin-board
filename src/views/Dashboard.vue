@@ -356,7 +356,8 @@ export default {
   },
   methods: {
     async ResetStudyTokens() {
-      await api.ResetStudyTokens();
+      //await api.ResetStudyTokens();
+      await api.SentTokenToPublic();
     }
   }
 };
