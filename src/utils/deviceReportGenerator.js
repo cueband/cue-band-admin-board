@@ -19,7 +19,7 @@ export default{
         ...deviceOrderResults.map(e => ([
             e.get("updatedAt"),
             e.get("name"),
-            e.get("address").replace(/(?:\r\n|\r|\n)/g, ", "),
+            e.get("address").replace(/(?:(\r\n)+|\r+|\n+)/g, ", "),
             e.get("trackingCode")
         ]))
     ];
