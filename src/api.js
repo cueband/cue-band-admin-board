@@ -66,6 +66,14 @@ exports.GetStudyData = async () => {
     return results;
 }
 
+exports.GetStudyDataById = async (id) => {
+    const StudyData = Parse.Object.extend("StudyData");
+    const query = new Parse.Query(StudyData);
+    query.equalTo("objectId", id)
+    const results = await query.find({useMasterKey: true});
+    return results;
+}
+
 exports.getConsentReports = async () => {
     const ConsentReports = Parse.Object.extend("ConsentReport");
     const query = new Parse.Query(ConsentReports);
@@ -145,6 +153,14 @@ exports.getDeviceBoxByBoxNumber = async (boxNumber) => {
     const results = await query.find({useMasterKey: true});
     return results;
 }
+
+exports.GetAllConsent = async () => {
+    const Consent = Parse.Object.extend("Consent");
+    const query = new Parse.Query(Consent);
+    query.select("token", "name");
+    const results = await query.find({useMasterKey: true});
+    return results;
+} 
 
 exports.GetConsent = async (token) => {
     const Consent = Parse.Object.extend("Consent");

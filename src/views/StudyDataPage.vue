@@ -180,7 +180,7 @@
       </div>
     </div>
   </div>
-  <div class="py-4 container-fluid">
+  <div class="py-4 container-fluid" v-if="studyDataObject">
     <div class="mt-3 row" style="justify-content: center">
       <div class="col-12 col-md-6 col-xl-4" v-if="studyDataObject.get('currentState') == 'WaitingForBranchApproval'">
         <select-branch-card :info="{ studyDataObject: studyDataObject }"/>
@@ -188,7 +188,8 @@
     </div>
     <div class="mt-3 row">
       <div class="col-12 col-md-6 col-xl-4">
-        <study-data-card :info="{ studyDataObject: studyDataObject, demographicsDataObject: demographicsDataObject }"/>
+        <highlights-card :info="getHighlights()"/>
+        <study-data-card :info="{ studyDataObject: studyDataObject }"/>
         <consent-card :info="{ consentObject: consentObject }" v-if="hasConsentData"/>
         <demographics-data-card :info="{ demographicsDataObject: demographicsDataObject }" v-if="hasDemographicsData"/>
       </div>
@@ -222,11 +223,12 @@ import {
 } from "@fortawesome/free-brands-svg-icons";
 import setNavPills from "@/assets/js/nav-pills.js";
 import setTooltip from "@/assets/js/tooltip.js";
-import { mapGetters} from "vuex";
+import { mapGetters } from "vuex";
 
 import api from "../api"
 import StagesInfoCard from "./components/StagesInfoCard.vue";
 import StudyDataCard from './components/StudyDataCard.vue';
+import HighlightsCard from './components/HighlightsCard.vue';
 import ConsentCard from './components/ConsentCard.vue';
 import DemographicsDataCard from './components/DemographicsDataCard.vue';
 import DiaryEntryCard from './components/DiaryEntryCard.vue';
@@ -244,6 +246,7 @@ export default {
     DemographicsDataCard,
     DiaryEntryCard,
     SelectBranchCard,
+    HighlightsCard
   },
   data() {
     return {
@@ -263,7 +266,7 @@ export default {
       faFacebook,
       faTwitter,
       faInstagram,
-      studyDataObject: {},
+      studyDataObject: null,
       consentObject: {},
       hasConsentData: false,
       demographicsDataObject: {},
@@ -301,16 +304,41 @@ export default {
         this.diaryEntryObject = diaryEntriesObject[0];
         this.hasDiaryEntry = true;
       }
+    },
+    hasFullConsent () {
+      if (!this.hasConsentData) return null;
+      let fullConsent = true;
+      for (let i = 1; i <= 9; i++) {
+        fullConsent = fullConsent && (this.consentObject.get(`question${i}Answer`) == "Yes")
+      }
+      return fullConsent
+    },
+    getHighlights () {
+      return { 
+        email: this.studyDataObject.get("insertTokenEmail"), 
+        name: this.hasConsentData && this.consentObject.get("name"),
+        hasParkinsons: this.hasDemographicsData ? this.demographicsDataObject.get("parkinsons") : null,
+        hasDrooling: this.hasDemographicsData ? this.demographicsDataObject.get("drooling") : null,
+        isTrial: this.studyDataObject.get("selectBranchesChooseTrial"), 
+        isFreeLiving: this.studyDataObject.get("selectBranchesChooseFreeLiving"), 
+        hasFullConsent: this.hasFullConsent(),
+        platform: `${this.studyDataObject.get("selectBranchesPlatform")} ${this.studyDataObject.get("selectBranchesVersion")}`,
+        deviceName: this.studyDataObject.get("selectBranchesDeviceName")
+      }
     }
   },
   created() {
-    this.studyDataObject = this.$store.getters.getStudyDataById(this.id);
+
+  },
+  async mounted() {
+    this.$store.state.isAbsolute = true;
+    let studyData = await api.GetStudyDataById(this.id);
+    this.studyDataObject = studyData ? studyData[0] : null;
+    console.log(this.studyDataObject)
+    
     this.GetConsent();
     this.GetDemographicsData();
     this.GetFirstDiaryEntry();
-  },
-  mounted() {
-    this.$store.state.isAbsolute = true;
     setNavPills();
     setTooltip(this.$store.state.bootstrap);
   },

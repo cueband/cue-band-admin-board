@@ -40,7 +40,7 @@ export default {
         "shipping_address-postcode": "postcode",
       }
       
-      let currentLineStart = 51;
+      let currentLineStart = 0;
       for (let k in addressToElementMap) {
         svgElement.querySelector(`#${k}`).textContent = "";
         let chunks = (addressData.get(addressToElementMap[k]) || "").match(chunksRegex);
@@ -101,7 +101,7 @@ export default {
         "shipping_address-postcode": "postcode",
       }
       
-      let currentLineStart = 51;
+      let currentLineStart = 0;
       for (let k in addressToElementMap) {
         svgElement.querySelector(`#${k}`).textContent = "";
         let chunks = (addressData.get(addressToElementMap[k]) || "").match(chunksRegex);
@@ -117,8 +117,6 @@ export default {
         })
       }
       
-      svgElement.querySelector("#box_number").textContent = boxNumber;
-
       let label = await api.saveAddressLabel({
         trackingCode,
         boxNumber,
