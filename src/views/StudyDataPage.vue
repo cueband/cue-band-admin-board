@@ -317,8 +317,8 @@ export default {
       return { 
         email: this.studyDataObject.get("insertTokenEmail"), 
         name: this.hasConsentData && this.consentObject.get("name"),
-        hasParkinsons: this.hasDemographicsData && this.demographicsDataObject.get("parkinsons"),
-        hasDrooling: this.hasDemographicsData && this.demographicsDataObject.get("drooling"),
+        hasParkinsons: this.hasDemographicsData ? this.demographicsDataObject.get("parkinsons") : null,
+        hasDrooling: this.hasDemographicsData ? this.demographicsDataObject.get("drooling") : null,
         isTrial: this.studyDataObject.get("selectBranchesChooseTrial"), 
         isFreeLiving: this.studyDataObject.get("selectBranchesChooseFreeLiving"), 
         hasFullConsent: this.hasFullConsent(),
