@@ -23,7 +23,6 @@ const getters = {
 const actions = {
     async fetchStudyData({ commit }) {
         const response = await API.GetStudyData();
-        console.log(response);
         commit('setStudyData', response);
     }, 
     async fetchMethodCounts({ commit }) {

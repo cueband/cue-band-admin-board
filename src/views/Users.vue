@@ -5,12 +5,13 @@
     </div>
     <div class="row">
       <div class="col-12">
-        <study-data-table :tableName="selectedTab && selectedTab.name" :allStudyData="dataSource" :key="`study-table-${this.selectedTab.id}`"/>
+        <study-data-table :tableName="selectedTab && selectedTab.name" :allStudyData="dataSource" :key="`study-table-${this.selectedTab.id}`" :consent="consent"/>
       </div>
     </div>
   </div>
 </template>
 <script>
+import api from "@/api"
 import { mapGetters, mapActions } from "vuex";
 import StudyDataTable from "@/components/cueband/StudyDataTable.vue";
 import UsersNavPill from "@/views/components/UsersNavPill.vue"
@@ -34,6 +35,7 @@ export default {
     return {
       iconBackground: "bg-gradient-success",
       faUsers,
+      consent: null,
       pillTabs: [
         {
           name: "All Users",
@@ -73,12 +75,23 @@ export default {
     ...mapActions(["fetchStudyData", "fetchMethodCounts"]),
     handleTabChange(event) {
       this.selectedTab = this.pillTabsMap.get(event.tabId);
+    },
+    async getAllConsent () {
+      const consentArray = await api.GetAllConsent();
+      this.consent = {};
+      consentArray.forEach(e => {
+        this.consent[e.get("token")] = e.get("name")
+      });
     }
+  },
+  mounted () {
+    this.getAllConsent()
   },
   created() {
     this.pillTabsMap = new Map(this.pillTabs.map(o => ([o.id, o])));
     this.fetchStudyData();
     this.fetchMethodCounts();
+    this.getAllConsent();
   }
 };
 </script>

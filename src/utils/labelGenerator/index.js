@@ -117,8 +117,6 @@ export default {
         })
       }
       
-      svgElement.querySelector("#box_number").textContent = boxNumber;
-
       let label = await api.saveAddressLabel({
         trackingCode,
         boxNumber,

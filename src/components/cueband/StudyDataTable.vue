@@ -11,6 +11,9 @@
               <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" v-if="isSelectable">
               </th>
               <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                Email (Name)
+              </th>
+              <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
                 User ID
               </th>
               <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
@@ -38,6 +41,14 @@
               <td>
                 <div class="d-flex px-2">
                   <div class="my-auto">
+                    <h6 class="mb-0 text-sm" v-if="!consent || !consent[studyData.get('giveConsentKey')]">{{studyData.get("insertTokenEmail")}}</h6>
+                    <h6 class="mb-0 text-sm" v-else>{{studyData.get("insertTokenEmail")}} <span class="text-xs text-secondary ">({{consent[studyData.get('giveConsentKey')]}})</span></h6>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex px-2">
+                  <div class="my-auto">
                     <h6 class="mb-0 text-sm">{{studyData.get("user").id}}</h6>
                   </div>
                 </div>
@@ -59,9 +70,9 @@
                 </div>
               </td>
               <td class="align-middle" v-if="!isSelectable">
-                <button class="btn btn-link text-secondary mb-0" @click.once="goToStudyDataPage(studyData.id)">
+                <router-link class="btn btn-link text-secondary mb-0" :to="`/studydata/${studyData.id}`">
                   Show More
-                </button>
+                </router-link>
               </td>
             </tr>
           </tbody>
@@ -84,6 +95,7 @@ export default {
     props: {
       tableName: {type: String},
       allStudyData: {type: Array, required: true},
+      consent: {type: Object},
       isSelectable: {type: Boolean},
     },
     emits: ["change"],
