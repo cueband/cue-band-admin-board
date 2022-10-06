@@ -55,6 +55,7 @@ exports.setDeviceOrderExported = async (rowIds) => {
 exports.GetUsers = async () => {
     const User = Parse.Object.extend("User");
     const query = new Parse.Query(User);
+    query.limit(5000);
     const results = await query.find();
     return results;
 }
@@ -62,6 +63,7 @@ exports.GetUsers = async () => {
 exports.GetStudyData = async () => {
     const StudyData = Parse.Object.extend("StudyData");
     const query = new Parse.Query(StudyData);
+    query.limit(5000);
     const results = await query.find({useMasterKey: true});
     return results;
 }
@@ -77,6 +79,7 @@ exports.GetStudyDataById = async (id) => {
 exports.getConsentReports = async () => {
     const ConsentReports = Parse.Object.extend("ConsentReport");
     const query = new Parse.Query(ConsentReports);
+    query.limit(5000);
     const results = await query.find();
     return results;
 }
@@ -84,6 +87,7 @@ exports.getConsentReports = async () => {
 exports.getDeviceOrderReports = async () => {
     const DeviceOrderReport = Parse.Object.extend("DeviceOrderReport");
     const query = new Parse.Query(DeviceOrderReport);
+    query.limit(5000);
     const results = await query.find();
     return results;
 }
@@ -105,6 +109,7 @@ exports.GetUnexportedDeviceOrders = async () => {
     query.notEqualTo("trackingCode", null);
     query.notEqualTo("deviceBox", null);
     query.ascending("updatedAt");
+    query.limit(5000);
     const results = await query.find({useMasterKey: true});
     return results;
 }
@@ -158,6 +163,7 @@ exports.GetAllConsent = async () => {
     const Consent = Parse.Object.extend("Consent");
     const query = new Parse.Query(Consent);
     query.select("token", "name");
+    query.limit(5000);
     const results = await query.find({useMasterKey: true});
     return results;
 } 
@@ -166,6 +172,7 @@ exports.GetConsent = async (token) => {
     const Consent = Parse.Object.extend("Consent");
     const query = new Parse.Query(Consent);
     query.equalTo("token", token);
+    query.limit(5000);
     const results = await query.find({useMasterKey: true});
     return results;
 } 
