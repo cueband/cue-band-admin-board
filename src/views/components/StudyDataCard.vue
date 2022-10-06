@@ -10,6 +10,26 @@
     <div class="p-3 card-body">
       <ul class="list-group">
         <li class="pt-0 text-sm border-0 list-group-item ps-0">
+          <strong class="text-dark">Trial: </strong> &nbsp;
+          {{ info.studyDataObject.get("selectBranchesChooseTrial") }}
+        </li>
+
+        <li class="pt-0 text-sm border-0 list-group-item ps-0">
+          <strong class="text-dark">Free Living: </strong> &nbsp;
+          {{ info.studyDataObject.get("selectBranchesChooseFreeLiving") }}
+        </li>
+
+        <!-- <li class="pt-0 text-sm border-0 list-group-item ps-0">
+          <strong class="text-dark">Has Parkinsons: </strong> &nbsp;
+          {{ info.demographicsDataObject.get("parkinsons") }}
+        </li>
+
+        <li class="pt-0 text-sm border-0 list-group-item ps-0">
+          <strong class="text-dark">Experiences Drooling: </strong> &nbsp;
+          {{ info.demographicsDataObject.get("drooling") }}
+        </li> -->
+
+        <li class="pt-0 text-sm border-0 list-group-item ps-0">
           <strong class="text-dark">Client Last Update:</strong> &nbsp;
           {{ info.studyDataObject.get("clientLastUpdate") }}
         </li>

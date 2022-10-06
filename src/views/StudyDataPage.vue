@@ -188,7 +188,7 @@
     </div>
     <div class="mt-3 row">
       <div class="col-12 col-md-6 col-xl-4">
-        <study-data-card :info="{ studyDataObject: studyDataObject }"/>
+        <study-data-card :info="{ studyDataObject: studyDataObject, demographicsDataObject: demographicsDataObject }"/>
         <consent-card :info="{ consentObject: consentObject }" v-if="hasConsentData"/>
         <demographics-data-card :info="{ demographicsDataObject: demographicsDataObject }" v-if="hasDemographicsData"/>
       </div>
