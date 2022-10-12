@@ -325,6 +325,11 @@ exports.saveLabelTrackingCodeData = async ({labelObject, trackingCode, boxNumber
 
     if (trackingCode) labelObject.set("trackingCode", trackingCode);
     labelObject.set("deviceBox", deviceBoxId);
+    if (trackingCode && deviceBoxId) {
+        const deviceOrderACL = new Parse.ACL(labelObject.get('user'));
+        deviceOrderACL.setPublicReadAccess(false);
+        labelObject.setACL(deviceOrderACL);
+    }
     let result = await labelObject.save({}, { useMasterKey: true });
 
     if (isDeviceSent(labelObject)) {
@@ -365,7 +370,7 @@ exports.saveAddressLabel = async ({trackingCode, user, labelId, name, address, b
     if (deviceBoxId) deviceOrder.set('deviceBox', deviceBoxId);
     if (labelId) deviceOrder.set('labelId', labelId);
 
-    const deviceOrderACL = new Parse.ACL(user);
+    const deviceOrderACL = (trackingCode && deviceBoxId) ? new Parse.ACL(user) : new Parse.ACL();
     deviceOrderACL.setPublicReadAccess(false);
     deviceOrder.setACL(deviceOrderACL);
     let deviceOrderSave = await deviceOrder.save();
