@@ -673,3 +673,81 @@ exports.ResetStudyTokens = async() => {
     console.log("done");
 
 }
+
+exports.HideStringOnAddress = async() => { 
+
+    const DeviceOrderSchema = Parse.Object.extend("DeviceOrderSchema");
+    const query = new Parse.Query(DeviceOrderSchema);
+    query.equalTo("trackingCode", null);
+    query.limit(1000);
+    const results = await query.find({useMasterKey: true});
+
+    results.forEach(element => {
+        const DeviceOrderSchemaACL = new Parse.ACL();
+        DeviceOrderSchemaACL.setPublicReadAccess(false);
+        element.setACL(DeviceOrderSchemaACL);
+        element.save({}, {useMasterKey: true});
+    });
+
+    console.log("done");
+
+}
+
+exports.GetEmailsAddressFromPeopleWithNullTrackingCode = async() => {
+
+
+    const DeviceOrderSchema = Parse.Object.extend("DeviceOrderSchema");
+    const query = new Parse.Query(DeviceOrderSchema);
+    query.equalTo("trackingCode", null);
+    query.limit(1000);
+    const results = await query.find({useMasterKey: true});
+
+
+    for (const element of results) {
+        var user = element.get('user');
+    
+        const StudyData = Parse.Object.extend("StudyData");
+        const queryStudyData = new Parse.Query(StudyData);
+        queryStudyData.equalTo('user', user);
+        const results2 = await queryStudyData.find({useMasterKey: true});
+
+        console.log(results2[0].get('insertTokenEmail'));
+    }
+
+    console.log(results.length);
+    
+
+}
+
+exports.Test = async() => {
+
+    const DeviceOrderSchema = Parse.Object.extend("DeviceOrderSchema");
+    const query = new Parse.Query(DeviceOrderSchema);
+    query.equalTo("user", "CCGlM7KPWU");
+    query.limit(1000);
+    const results = await query.find();
+
+
+    console.log(results);
+
+    
+
+}
+
+
+exports.TestResetPassword = async() => {
+    var result = await Parse.User.requestPasswordReset("john.wilde11@btinternet.com");
+   console.log(result);
+    console.log("done");
+}
+
+
+exports.LogInTest = async () => {
+    var result  = await Parse.User.logIn("lapc19@hotmail.com", "Test1111");
+    console.log(result);
+}
+
+exports.SendNotAcceptedEmail = async(email) => {
+    const result = await Parse.Cloud.run("sendNotAcceptedEmail", {email}, {useMasterKey: true});
+    return result.code == 200;
+}

@@ -2,7 +2,7 @@
   <div class="py-4 container-fluid">
     <div class="row">
       <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-        <!--button @click="ResetStudyTokens">Change Study Tokens</button-->
+        <button @click="ResetStudyTokens">Test</button>
         <mini-statistics-card
           title="Today's Money"
           value="$53,000"
@@ -357,7 +357,9 @@ export default {
   methods: {
     async ResetStudyTokens() {
       //await api.ResetStudyTokens();
-      await api.SentTokenToPublic();
+      //await api.SentTokenToPublic();
+
+      await api.SendNotAcceptedEmail("lapc19@hotmail.com");
     }
   }
 };
