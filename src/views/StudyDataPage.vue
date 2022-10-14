@@ -308,9 +308,11 @@ export default {
     hasFullConsent () {
       if (!this.hasConsentData) return null;
       let fullConsent = true;
-      for (let i = 1; i <= 9; i++) {
+      let required = [1,2,3,4,8,9]
+      required.forEach(i =>{
         fullConsent = fullConsent && (this.consentObject.get(`question${i}Answer`) == "Yes")
-      }
+      })
+      
       return fullConsent
     },
     getHighlights () {
