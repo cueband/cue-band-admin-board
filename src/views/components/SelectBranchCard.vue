@@ -157,6 +157,7 @@ export default {
 
                     case 'NoStudy':
                         result = await api.SaveStudyDataState(this.info.studyDataObject, this.selectedStudyBranch, null, null);
+                        confirmationEmailSuccess = await api.SendNotAcceptedEmail(email);
                         break;
 
                     default:
