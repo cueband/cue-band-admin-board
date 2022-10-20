@@ -20,7 +20,7 @@ export default{
             e.get("updatedAt"),
             e.get("name"),
             e.get("address").replace(/(?:(\r\n)+|\r+|\n+)/g, ", "),
-            e.get("trackingCode")
+            e.get("trackingCode") || ''
         ]))
     ];
     const csvContent = arrayToCsv(unexportedRows);

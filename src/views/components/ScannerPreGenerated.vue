@@ -20,7 +20,7 @@
           </label> 
         </div>
 
-        <div class="row my-4">
+        <div class="row my-4" v-if="requiresTrackingCode">
           <label class="text-lg">Tracking Code: 
             <input type="text" v-model="trackingCode"/>
           </label> 
@@ -53,13 +53,6 @@
         </div>
       </div>
     </div>
-    
-    <!-- <div class="row" v-if="currentView == this.views.TRACKING_VIEW">
-      <span>Tracking code: {{ trackingCode }}</span>
-    </div>
-    <div class="row" v-if="currentView == this.views.LABEL_VIEW">
-      <span>Label code: {{ labelCode }}</span>
-    </div> -->
   </div>
 </template>
 <script>
@@ -72,10 +65,14 @@ export default {
   components: {
     SoftAlert
   },
+  props: ['requiresTrackingCode'],
   computed: {
+    meetsTrackingCodeRequirements () {
+      return (!this.requiresTrackingCode || this.trackingCode)
+    },
     saveButtonDisabled() {
       if (this.labelError || this.trackingError) return false;
-      return this.saving || this.scannerPaused || !(this.labelCode && this.trackingCode && this.boxNumber && this.isValidBoxNumber(this.boxNumber));
+      return this.saving || this.scannerPaused || !(this.labelCode && this.meetsTrackingCodeRequirements && this.boxNumber && this.isValidBoxNumber(this.boxNumber));
     },
     saveButtonText() {
       if (this.saving) {
@@ -89,15 +86,15 @@ export default {
         return "Scan a code...";
       }
 
-      if (this.labelCode && !this.trackingCode) {
+      if (this.labelCode && !this.meetsTrackingCodeRequirements) {
         return "Scan tracking code...";
       }
 
-      if (!this.labelCode && this.trackingCode) {
+      if (!this.labelCode && this.meetsTrackingCodeRequirements) {
         return "Scan label code...";
       }
 
-      if (this.labelCode && this.trackingCode && (!this.boxNumber || !this.isValidBoxNumber(this.boxNumber))) {
+      if (this.labelCode && this.meetsTrackingCodeRequirements && (!this.boxNumber || !this.isValidBoxNumber(this.boxNumber))) {
         return "Enter box number...";
       }
       return "Save & Continue scanning";
@@ -114,15 +111,15 @@ export default {
         return "";
       }
 
-      if (this.labelCode && !this.trackingCode) {
+      if (this.labelCode && !this.meetsTrackingCodeRequirements) {
         return "";
       }
 
-      if (!this.labelCode && this.trackingCode) {
+      if (!this.labelCode && this.meetsTrackingCodeRequirements) {
         return "";
       }
 
-      if (this.labelCode && this.trackingCode && (!this.boxNumber || !this.isValidBoxNumber(this.boxNumber))) {
+      if (this.labelCode && this.meetsTrackingCodeRequirements && (!this.boxNumber || !this.isValidBoxNumber(this.boxNumber))) {
         return "";
       }
       return "green text-white";
@@ -130,6 +127,10 @@ export default {
 
   },
   watch: {
+    requiresTrackingCode (newVal, oldVal) {
+      if (newVal == oldVal) return;
+      if (!newVal) this.trackingCode = null; 
+    },
     async labelCode(newVal, oldVal) {
       if (newVal == oldVal) return;
       if (newVal && newVal != "") this.isNewInput = false;
@@ -139,7 +140,7 @@ export default {
         this.boxNumber = null;
         this.error = null;
       };
-      if (!newVal && !this.trackingCode && !this.boxNumber) this.isNewInput = true;
+      if (!newVal && !this.meetsTrackingCodeRequirements && !this.boxNumber) this.isNewInput = true;
       this.labelError = null;
       if (!this.isLabelCode(newVal)) {
         this.labelData = null;
@@ -159,7 +160,7 @@ export default {
         this.isNewInput = true;
       }
 
-      if (this.labelCode && this.trackingCode && !this.boxNumber  && !this.labelError && !this.trackingError) {
+      if (this.labelCode && this.meetsTrackingCodeRequirements && !this.boxNumber  && !this.labelError && !this.trackingError) {
         this.$refs.boxNum.focus();
       }
     },
@@ -175,23 +176,25 @@ export default {
       if (!newVal && !this.labelCode && !this.boxNumber) this.isNewInput = true;
       this.trackingError = null;
 
-      let trackingData = await this.fetchTrackingCodeUser(newVal);
-      if (trackingData && trackingData.length > 0) {
-        this.trackingData = trackingData[0];
-        if (this.labelData && this.trackingData.id != this.labelData.id) this.trackingError = "Tracking code is already in use.";
-        else if (!this.labelData) {
-          this.labelCode = `cue${this.trackingData.id}`
-        };
+      if (this.requiresTrackingCode) {
+        let trackingData = await this.fetchTrackingCodeUser(newVal);
+        if (trackingData && trackingData.length > 0) {
+          this.trackingData = trackingData[0];
+          if (this.labelData && this.trackingData.id != this.labelData.id) this.trackingError = "Tracking code is already in use.";
+          else if (!this.labelData) {
+            this.labelCode = `cue${this.trackingData.id}`
+          };
+        }
       }
 
-      if (this.labelCode && this.isLabelCode(this.labelCode) && this.trackingCode && !this.boxNumber && !this.labelError && !this.trackingError) {
+      if (this.labelCode && this.isLabelCode(this.labelCode) && this.meetsTrackingCodeRequirements && !this.boxNumber && !this.labelError && !this.trackingError) {
         this.$refs.boxNum.focus();
       }
     },
     async boxNumber(newVal, oldVal) {
       if (newVal == oldVal) return;
       if (newVal && newVal != "") this.isNewInput = false;
-      if (!newVal && !this.labelCode && !this.trackingCode) this.isNewInput = true;
+      if (!newVal && !this.labelCode && !this.meetsTrackingCodeRequirements) this.isNewInput = true;
       this.warning = null;
       if (!this.isValidBoxNumber(newVal)) {
         this.boxData = null;
@@ -238,7 +241,7 @@ export default {
         this.lastKeypress = event.timeStamp;
         return false;
       }
-      if (event.target && event.target.readOnly === false && !(this.scannerInputText && this.scannerInputText[0] == '%')) return;
+      if (event.target && event.target.readOnly === false && event.target.type !== 'checkbox' && !(this.scannerInputText && this.scannerInputText[0] == '%')) return;
       if (this.scannerPaused && !(this.scannerInputText && this.scannerInputText[0] == '%')) return;
       if (this.scannerInputText && this.scannerInputText[0] == '%') {
         event.preventDefault();
@@ -267,11 +270,11 @@ export default {
       this.isNewInput = false;
       if (this.isLabelCode(barcode)) {
         this.labelCode = barcode;
-      } else {
+      } else if (this.requiresTrackingCode){
         this.trackingCode = barcode;
       }
 
-      if (this.labelCode && this.trackingCode && this.boxNumber && !this.scannerPaused) {
+      if (this.labelCode && this.meetsTrackingCodeRequirements && this.boxNumber && !this.scannerPaused) {
         console.log('success');
       }
     },
