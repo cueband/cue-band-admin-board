@@ -12,7 +12,7 @@ sgMail.setApiKey(process.env.VUE_APP_SENDGRID_API_KEY);
 const DELIVERY_PROGRESS_DEVICE_SENT = "Device Sent";
 
 const isDeviceSent = (label) => {
-    return label.get("trackingCode") && label.get("deviceBox");
+    return label.get("deviceBox");
 }
 
 const setDeviceSentProgress = async (label) => {
@@ -96,7 +96,6 @@ exports.GetUnexportedDeviceOrderCounts = async () => {
     const DeviceOrderSchema = Parse.Object.extend("DeviceOrderSchema");
     const query = new Parse.Query(DeviceOrderSchema);
     query.containedIn("isReportExported", [false, null]);
-    query.notEqualTo("trackingCode", null);
     query.notEqualTo("deviceBox", null);
     const count = await query.count({useMasterKey: true});
     return count;
@@ -106,7 +105,6 @@ exports.GetUnexportedDeviceOrders = async () => {
     const DeviceOrderSchema = Parse.Object.extend("DeviceOrderSchema");
     const query = new Parse.Query(DeviceOrderSchema);
     query.containedIn("isReportExported", [false, null]);
-    query.notEqualTo("trackingCode", null);
     query.notEqualTo("deviceBox", null);
     query.ascending("updatedAt");
     query.limit(5000);
@@ -325,7 +323,7 @@ exports.saveLabelTrackingCodeData = async ({labelObject, trackingCode, boxNumber
 
     if (trackingCode) labelObject.set("trackingCode", trackingCode);
     labelObject.set("deviceBox", deviceBoxId);
-    if (trackingCode && deviceBoxId) {
+    if (deviceBoxId) {
         const deviceOrderACL = new Parse.ACL(labelObject.get('user'));
         deviceOrderACL.setPublicReadAccess(false);
         labelObject.setACL(deviceOrderACL);
@@ -370,7 +368,7 @@ exports.saveAddressLabel = async ({trackingCode, user, labelId, name, address, b
     if (deviceBoxId) deviceOrder.set('deviceBox', deviceBoxId);
     if (labelId) deviceOrder.set('labelId', labelId);
 
-    const deviceOrderACL = (trackingCode && deviceBoxId) ? new Parse.ACL(user) : new Parse.ACL();
+    const deviceOrderACL = (deviceBoxId) ? new Parse.ACL(user) : new Parse.ACL();
     deviceOrderACL.setPublicReadAccess(false);
     deviceOrder.setACL(deviceOrderACL);
     let deviceOrderSave = await deviceOrder.save();
