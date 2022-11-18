@@ -3,6 +3,15 @@
     <div class="py-2 container-fluid">
       <div class="row">
         <div class="col-12">
+          <div class="nav nav-pills p-2">
+            <button class="bg-white text-center shadow border-radius-md d-flex align-items-center justify-content-center m-2 text-sm text-bold w-fit p-2 btn border-0 text-muted" @click="generateConsentReport" :disabled="buttonEnabled === 'false'">{{ buttonText }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="py-2 container-fluid">
+      <div class="row">
+        <div class="col-12">
           <generated-reports-table ref="consentReportsTable" tableName="User Consent" :reportsData="dataSource"/>
         </div>
       </div>
@@ -24,7 +33,9 @@ export default {
   },
   data() {
     return {
-      dataSource: []
+      dataSource: [],
+      buttonText: "Generate Consent Report",
+      buttonEnabled: "true",
     };
   },
   methods: {
@@ -37,8 +48,12 @@ export default {
         console.error(err);
       }
     },
-    selectAll() {
-      this.$refs.userDeviceTable && this.$refs.userDeviceTable.selectAll();
+    async generateConsentReport() {
+      this.buttonText = "Generating Consent Report..."
+      this.buttonEnabled = "false";
+      await api.GenerateConsentReport();
+      this.buttonText ="Generate Consent Report";
+      this.buttonEnabled ="true";
     }
   },
   async mounted () {

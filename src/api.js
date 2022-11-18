@@ -1,5 +1,15 @@
 const Parse = require('parse');
 
+
+const { jsPDF } = require("jspdf");
+require('jspdf-autotable');
+
+const math = require('mathjs')
+
+const randomBytes = require('randombytes');
+
+window.Buffer = window.Buffer || require("buffer").Buffer; 
+
 Parse.initialize(process.env.VUE_APP_APP_ID, process.env.VUE_APP_JAVASCRIPT_KEY, process.env.VUE_APP_MASTER_KEY);
 Parse.masterKey = process.env.VUE_APP_MASTER_KEY;
 
@@ -80,7 +90,7 @@ exports.getConsentReports = async () => {
     const ConsentReports = Parse.Object.extend("ConsentReport");
     const query = new Parse.Query(ConsentReports);
     query.limit(5000);
-    const results = await query.find();
+    const results = await query.find({useMasterKey: true});
     return results;
 }
 
@@ -749,3 +759,860 @@ exports.SendNotAcceptedEmail = async(email) => {
     const result = await Parse.Cloud.run("sendNotAcceptedEmail", {email}, {useMasterKey: true});
     return result.code == 200;
 }
+
+exports.GetPostCodeInfo = async(postcode) => {
+    var response =  await fetch(`http://api.postcodes.io/postcodes/${postcode}`);
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+        
+    var result = await response.json();
+    return result;
+}
+
+exports.CreateReport = async() => {
+
+    var studyDatas = await this.GetStudyData();
+
+    console.log(studyDatas.length);
+
+    //Branch Data
+    var onTrialBranch = studyDatas.filter((element) => element.get('studyBranch') == "Trial");
+    var numberOfParticipantsOnTrial = onTrialBranch.length;
+    console.log("onTrialBranch: " + numberOfParticipantsOnTrial);
+
+    var onFreeLivingBranch = studyDatas.filter((element) => element.get('studyBranch') == "FreeLiving");
+    var numberOfParticipantsOnFreeLiving = onFreeLivingBranch.length;
+    console.log("onFreeLivingBranch: " + numberOfParticipantsOnFreeLiving);
+
+    var onTrialToFreeLivingBranch = studyDatas.filter((element) => element.get('studyBranch') == "FreeLivingFromTrial");
+    var numberOfParticipantsOnTrialToFreeLiving = onTrialToFreeLivingBranch.length;
+    console.log("onTrialToFreeLiving: " + numberOfParticipantsOnTrialToFreeLiving);
+
+    var onNoStudyBranch = studyDatas.filter((element) => element.get('studyBranch') == "NoStudy");
+    var numberOfParticipantsOnNoStudy = onNoStudyBranch.length;
+    console.log("onNoStudyBranch: " + numberOfParticipantsOnNoStudy);
+
+    var onNoneBranch = studyDatas.filter((element) => element.get('studyBranch') == "None");
+    var numberOfParticipantsOnNone = onNoneBranch.length;
+    console.log("onNoneBranch: " + numberOfParticipantsOnNone);
+
+    const participantsSum = numberOfParticipantsOnTrial + numberOfParticipantsOnFreeLiving + numberOfParticipantsOnTrialToFreeLiving + numberOfParticipantsOnNoStudy + numberOfParticipantsOnNone;
+
+    console.log("Total:" + (participantsSum));
+
+    let branchData = {
+        numberOfParticipants: studyDatas.length,
+        numberOfParticipantsOnTrial,
+        numberOfParticipantsOnFreeLiving,
+        numberOfParticipantsOnTrialToFreeLiving,
+        numberOfParticipantsOnNoStudy,
+        numberOfParticipantsOnNone,
+        numberOfParticipantsSum: participantsSum,
+    }
+
+    //Study Stage Data
+    
+    const studyStages = [
+        "AppStartedFirstTime",
+        "InterestedInParticipating",
+        "GiveConsent",
+        "InsertToken",
+        "SelectBranches",
+        "CreateAccount",
+        "PartialAssessment",
+        "WaitingForBranchApproval",
+        "AskDeliveryInfo",
+        "WaitingForDevice",
+        "Assessment1",
+        "CreateSchedule",
+        "SetCueingSettings",
+        "CueingMethod1",
+        "Assessment2",
+        "WashoutPeriod",
+        "Assessment3",
+        "CueingMethod2",
+        "Assessment4",
+        "PostStudy",
+        "NoStudy",
+        "FreeLiving",
+        "FailedBluetoothUpdateForStudyStage",
+    ]
+
+    let numberPerStudyStagesTrial = [];
+    for(let studyStage of studyStages) {
+        let onStudyStage = onTrialBranch.filter((element) => element.get('currentState') == studyStage);
+        numberPerStudyStagesTrial[studyStage] = onStudyStage.length;
+    }
+    console.log("Study Stages: Trial");
+    console.table(numberPerStudyStagesTrial);
+
+    let totalStagesTrial = 0;
+    for(let n in numberPerStudyStagesTrial) {
+        totalStagesTrial += numberPerStudyStagesTrial[n];
+    }
+    console.log("Total", totalStagesTrial);
+    numberPerStudyStagesTrial["Total"] = totalStagesTrial;
+
+    let numberPerStudyStagesFreeLiving = [];
+    for(let studyStage of studyStages) {
+    
+        let onStudyStage = onFreeLivingBranch.filter((element) => element.get('currentState') == studyStage);
+        numberPerStudyStagesFreeLiving[studyStage] = onStudyStage.length;
+    }
+    console.log("Study Stages: FreeLiving");
+    console.table(numberPerStudyStagesFreeLiving);
+    let totalStagesFreeLiving= 0;
+    for(let n in numberPerStudyStagesFreeLiving) {
+        totalStagesFreeLiving += numberPerStudyStagesFreeLiving[n];
+    }
+    console.log("Total", totalStagesFreeLiving);
+    numberPerStudyStagesFreeLiving["Total"] = totalStagesFreeLiving;
+
+    //Consents Trial
+    let trialConsent = [];
+
+    for(let trialStudyData of onTrialBranch) {
+        let consentKey = trialStudyData.get("giveConsentKey");
+        var consents = await this.GetConsent(consentKey);
+        if(consents.length != 0) {
+            trialConsent.push(consents[0]);
+        }
+    }
+    console.log("Trial consents:", trialConsent.length);
+
+    //Consents FreeLiving
+    
+    let freeLivingConsent = [];
+
+    for(let trialStudyData of onFreeLivingBranch) {
+        let consentKey = trialStudyData.get("giveConsentKey");
+        var consentsTemp = await this.GetConsent(consentKey);
+        if(consentsTemp.length != 0) {
+            freeLivingConsent.push(consents[0]);
+        }
+    }
+    console.log("FreeLiving consents:", freeLivingConsent.length);
+    let consent = [
+        ["Trial", trialConsent.length],
+        ["Free Living", freeLivingConsent.length]
+    ];
+
+    //Device Types
+    let onAndroid = onTrialBranch.filter((element) => element.get('selectBranchesPlatform') == "Android").length;
+    console.log("Trial - Android Devices", onAndroid);
+    
+    let onIOS = onTrialBranch.filter((element) => element.get('selectBranchesPlatform') == "iOS").length;
+    console.log("Trial - iOS Devices", onIOS);
+    console.log("Trial Devices Total:", onAndroid+onIOS);
+
+    let trialDevices = [
+        ["Android", onAndroid],
+        ["iOS", onIOS],
+        ["Total", onAndroid+onIOS]
+    ];
+
+    let onAndroidFL = onFreeLivingBranch.filter((element) => element.get('selectBranchesPlatform') == "Android").length;
+    console.log("FreeLiving - Android Devices", onAndroidFL);
+    
+    let onIOSFL = onFreeLivingBranch.filter((element) => element.get('selectBranchesPlatform') == "iOS").length;
+    console.log("FreeLiving - iOS Devices", onIOSFL);
+    console.log("FreeLiving Devices Total:", onAndroidFL+onIOSFL);
+
+    let freeLivingDevices = [
+        ["Android", onAndroidFL],
+        ["iOS", onIOSFL],
+        ["Total", onAndroidFL+onIOSFL]
+    ];
+
+    let studyDataParticipants = onTrialBranch.concat(onFreeLivingBranch);
+
+    //Postcode Region
+    let postcodeInfoRegionsResult = await this.GetPostcodeInfoRegions(studyDataParticipants);
+
+    let diaryDayStats = await this.getDiaryInfo();
+
+    await generateStudyReport(branchData, numberPerStudyStagesTrial, numberPerStudyStagesFreeLiving, trialDevices, freeLivingDevices, postcodeInfoRegionsResult.participantsByCountry, postcodeInfoRegionsResult.participantByCounty, postcodeInfoRegionsResult.participantByRegion, consent, diaryDayStats);
+}
+
+
+const generateStudyReport = async (branchData, studyStagesDataTrial, studyStagesDataFreeLiving, trialDevices, freeLivingDevices, participantsByCountry, participantsByCounty, participantsByRegion, consentData, diaryDayStats) => {
+    try {
+        const doc = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: 'a4'
+        });
+
+        let x = 14;
+        let y = 10;
+        doc.setFontSize(25);
+        doc.text(`Cue Band Study Report`, x, y);
+
+        y += 8;
+        doc.setFontSize(15);
+        doc.text(`${new Date()}`, x, y);
+
+        y += 15;
+        doc.setFontSize(20);
+        doc.text("Branch Data:", x, y);
+
+        y += 7;
+        doc.setFontSize(12);
+        doc.text(`Total Participants: ${branchData.numberOfParticipants}`, x, y);
+
+        y += 7;
+        doc.autoTable({
+            startY: y,
+            head: [['Branch', 'Number']],
+            body: [
+                ['Trial', branchData.numberOfParticipantsOnTrial],
+                ['Free Living', branchData.numberOfParticipantsOnFreeLiving],
+                ['Trial to Free Living', branchData.numberOfParticipantsOnTrialToFreeLiving],
+                ['Not In Study', branchData.numberOfParticipantsOnNoStudy],
+                ['Not allocated', branchData.numberOfParticipantsOnNone],
+                ['Total', branchData.numberOfParticipantsSum],
+            ]
+        });
+
+        y += 70;
+        doc.setFontSize(20);
+        doc.text("Study Stages: Trial", x, y);
+
+        const studyStagesDataTrialMap = [];
+        for(let studyStagesData in studyStagesDataTrial) {
+            studyStagesDataTrialMap.push([studyStagesData ,studyStagesDataTrial[studyStagesData]]);
+        }
+        y += 8;
+        doc.autoTable({
+            startY: y,
+            head: [['Study Stage', 'Number']],
+            body: studyStagesDataTrialMap
+        });
+
+        y += 0;
+        doc.setFontSize(20);
+        doc.text("Study Stages: Free Living", x, y);
+
+        const studyStagesDataFreeLivinglMap = [];
+        for(let studyStagesData in studyStagesDataFreeLiving) {
+            studyStagesDataFreeLivinglMap.push([studyStagesData, studyStagesDataFreeLiving[studyStagesData]]);
+        }
+        y += 8;
+        doc.autoTable({
+            startY: y,
+            head: [['Study Stage', 'Number']],
+            body: studyStagesDataFreeLivinglMap
+        });
+
+        y += 1;
+        doc.setFontSize(20);
+        doc.text("Devices", x, y);
+
+        y += 9;
+        doc.setFontSize(12);
+        doc.text("Trial", x, y);
+
+        y += 3;
+        doc.autoTable({
+            startY: y,
+            head: [['Device Type', 'Number']],
+            body: trialDevices
+        });
+
+        y += 40;
+        doc.setFontSize(12);
+        doc.text("Free Living", x, y);
+
+        y += 3;
+        doc.autoTable({
+            startY: y,
+            head: [['Device Type', 'Number']],
+            body: freeLivingDevices
+        });
+
+        y += 50;
+        doc.setFontSize(20);
+        doc.text("Consent Data", x, y);
+
+        y += 5;
+        doc.autoTable({
+            startY: y,
+            head: [['Branch', 'Number']],
+            body: consentData
+        });
+
+        y += 50;
+        doc.setFontSize(20);
+        doc.text("Region Data", x, y);
+
+        y += 9;
+        doc.setFontSize(12);
+        doc.text("Participants by Country", x, y);
+
+        const participantsByCountryMap = [];
+        for(let participantsByCountryElement in participantsByCountry) {
+            participantsByCountryMap.push([participantsByCountryElement, participantsByCountry[participantsByCountryElement]]);
+        }
+        y += 5;
+        doc.autoTable({
+            startY: y,
+            head: [['Country', 'Number']],
+            body: participantsByCountryMap
+        });
+
+        y -= 100;
+        doc.setFontSize(12);
+        doc.text("Participants by Region/District", x, y);
+
+        const participantByRegionMap = [];
+        for(let participantsByRegionElement in participantsByRegion) {
+            participantByRegionMap.push([participantsByRegionElement, participantsByRegion[participantsByRegionElement]]);
+        }
+        y += 5;
+        doc.autoTable({
+            startY: y,
+            head: [['Region/District', 'Number']],
+            body: participantByRegionMap
+        });
+   
+        y += 1;
+        doc.setFontSize(12);
+        doc.text("Participants by County/District", x, y);
+
+        const participantsByCountyMap = [];
+        for(let participantsByCountyElement in participantsByCounty) {
+            participantsByCountyMap.push([participantsByCountyElement, participantsByCounty[participantsByCountyElement]]);
+        }
+        y += 5;
+        doc.autoTable({
+            startY: y,
+            head: [['County/District', 'Number']],
+            body: participantsByCountyMap
+        });
+
+        y += (doc.lastAutoTable.finalY + 5);
+
+        doc.setFontSize(12);
+        doc.text("Diary Stats:", x, y);
+
+
+        let frequencyList = [];
+        let durationList = [];
+        let severityList = [];
+    
+        for(let ddsKey in diaryDayStats) {
+            var dds = diaryDayStats[ddsKey];
+    
+            frequencyList.push([
+                formatDate(ddsKey),
+                dds.totalValues,
+                dds.frequencyAverage,
+                dds.frequenctStd,
+                dds.maxFrequency,
+                dds.minFrequency
+            ]);
+    
+            durationList.push([
+                formatDate(ddsKey),
+                dds.totalValues,
+                dds.durationAverage,
+                dds.durationStd,
+                dds.maxDuration,
+                dds.minDuration
+            ]);
+    
+            severityList.push([
+                formatDate(ddsKey),
+                dds.totalValues,
+                dds.severityAverage,
+                dds.severityStd,
+                dds.maxSeverity,
+                dds.minSeverity
+            ]);
+        }
+    
+        doc.autoTable({
+            head: [['Date', 'Total Values', 'Frequency Avg','Frequency Std', 'Max Frequency', 'Min Frequency']],
+            body: frequencyList
+        });
+    
+        doc.autoTable({     
+            head: [['Date', 'Total Values', 'Duration Avg','Duration Std', 'Max Duration', 'Min Duration']],
+            body: durationList
+        });
+    
+        doc.autoTable({
+        
+            head: [['Date', 'Total Values', 'Severity Avg','Severity Std', 'Max Severity', 'Min Severity']],
+            body: severityList
+        });
+    
+        doc.save('studyReport.pdf');  
+        doc.output('blob');
+
+    } catch (err) {
+      console.log(err);
+      return;
+    }
+  }
+
+
+
+exports.GetPostcodeInfoRegions = async(studyDatas) => {
+
+    var postcodes = [];
+
+    for(let studyData of studyDatas) {
+        var userId = studyData.get("user").id;
+        const DeliveryAddress = Parse.Object.extend("DeliveryAddress");
+        const addressQuery = new Parse.Query(DeliveryAddress);
+        addressQuery.equalTo("user", userId);
+        const results = await addressQuery.find({useMasterKey: true});
+        if(results.length > 0) {
+            postcodes.push(results[0].get("postcode"));
+        }
+    }
+
+    console.log(postcodes);
+
+    let postcodeInfos = [];
+    for(let postcode of postcodes) {
+        var postcodeInfo = await this.GetPostCodeInfo(postcode);
+        var info = {
+            county: postcodeInfo.result["admin_county"],
+            region: postcodeInfo.result["region"],
+            district: postcodeInfo.result["admin_district"],
+            country: postcodeInfo.result["country"],
+        };
+
+        postcodeInfos.push(info);
+        console.log(info);
+        await delay(500);
+    }
+
+    var participantsByCountry = [];
+    let participantByCounty = [];
+    let participantByRegion = [];
+
+    for(let postcodeInfo of postcodeInfos) { 
+        if(postcodeInfo.country in participantsByCountry) {
+            participantsByCountry[postcodeInfo.country] += 1;
+        } else {
+            participantsByCountry[postcodeInfo.country] = 1;
+        }
+
+        if(postcodeInfo.county != null) {
+            if(postcodeInfo.county in participantByCounty) {
+                participantByCounty[postcodeInfo.county] += 1;
+            } else {
+                participantByCounty[postcodeInfo.county] = 1;
+            }
+        } else {
+            if(postcodeInfo.district in participantByCounty) {
+                participantByCounty[postcodeInfo.district] += 1;
+            } else {
+                participantByCounty[postcodeInfo.district] = 1;
+            }
+        }
+
+        if(postcodeInfo.region != null) {
+            if(postcodeInfo.region in participantByRegion) {
+                participantByRegion[postcodeInfo.region] += 1;
+            } else {
+                participantByRegion[postcodeInfo.region] = 1;
+            }
+        } else {
+            if(postcodeInfo.district in participantByRegion) {
+                participantByRegion[postcodeInfo.district] += 1;
+            } else {
+                participantByRegion[postcodeInfo.district] = 1;
+            }
+        }
+
+    }
+    console.table(participantsByCountry);
+    console.table(participantByCounty);
+    console.table(participantByRegion);
+
+    return {participantsByCountry, participantByCounty, participantByRegion};
+}
+
+const delay = (delayInms) => {
+    return new Promise(resolve => setTimeout(resolve, delayInms));
+}
+
+
+exports.getDiaryInfo = async() => {
+
+
+    const DiaryEntry = Parse.Object.extend("DiaryEntry");
+    const diaryEntryQuery = new Parse.Query(DiaryEntry);
+    diaryEntryQuery.limit(5000);
+    const results = await diaryEntryQuery.find({useMasterKey: true});
+
+    let diaryEntryByDate = {};
+   
+    for(let diaryEntry of results) {
+
+        var nulls = [];
+
+        var date = diaryEntry.get("dayDate");
+
+        if(date == null) {
+            nulls.push(diaryEntry);
+            continue;
+        }
+
+        if(date in diaryEntryByDate) {
+            let dateByDiaryEntries = diaryEntryByDate[date];
+            dateByDiaryEntries.push(diaryEntry);
+            diaryEntryByDate[date] = dateByDiaryEntries;
+        } else {
+            diaryEntryByDate[date] = [diaryEntry];
+        }
+
+    }
+
+
+    var diaryDayStats = {};
+
+    for (const dateKey in diaryEntryByDate) {
+     
+        var frequencySum = 0;
+        var durationSum = 0;
+        var severitySum = 0;
+        var totalValues = 0;
+
+        var minFrequency = Number.MAX_VALUE; 
+        var maxFrequency = Number.MIN_VALUE;
+        var minDuration = Number.MAX_VALUE; 
+        var maxDuration = Number.MIN_VALUE;
+        var minSeverity = Number.MAX_VALUE; 
+        var maxSeverity = Number.MIN_VALUE;
+
+        var frequencyAverage = 0;
+        var durationAverage = 0;
+        var severityAverage = 0;
+
+        var frequencyValues = [];
+        var durationValues = [];
+        var severityValues = [];
+        
+        let diaryEntryDate = diaryEntryByDate[dateKey];
+        totalValues = diaryEntryDate.length;
+        for(let de of diaryEntryDate) {
+            
+            frequencyValues.push(de.get("frequency"));
+            durationValues.push(de.get("duration"));
+            severityValues.push(de.get("severity"));
+
+            frequencySum += de.get("frequency");
+            durationSum += de.get("duration");
+            severitySum += de.get("severity");
+            
+            if(de.get("frequency") < minFrequency) {
+                minFrequency = de.get("frequency");
+            }
+
+            if(de.get("frequency") > maxFrequency) {
+                maxFrequency = de.get("frequency");
+            }
+
+            if(de.get("duration") < minDuration) {
+                minDuration = de.get("duration");
+            }
+
+            if(de.get("duration") > maxDuration) {
+                maxDuration = de.get("duration");
+            }
+
+            if(de.get("severity") < minSeverity) {
+                minSeverity = de.get("severity");
+            }
+
+            if(de.get("severity") > maxSeverity) {
+                maxSeverity = de.get("severity");
+            }
+        }
+
+        frequencyAverage = frequencySum / totalValues;
+        durationAverage = durationSum / totalValues;
+        severityAverage = severitySum / totalValues;
+    
+        var frequenctStd = math.std(frequencyValues);
+        var durationStd = math.std(durationValues);
+        var severityStd = math.std(severityValues);
+
+        var dayStats = {
+            totalValues,
+            frequencyAverage,
+            durationAverage,
+            severityAverage,
+            frequenctStd,
+            durationStd,
+            severityStd,
+            maxFrequency,
+            minFrequency,
+            maxDuration,
+            minDuration,
+            maxSeverity,
+            minSeverity,
+        };
+
+        diaryDayStats[dateKey] = dayStats;
+    }
+
+ 
+
+    console.table(diaryDayStats);
+
+    return diaryDayStats;
+}
+
+const formatDate = (date) => {
+    var d = new Date(date),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear();
+
+    if (month.length < 2) 
+        month = '0' + month;
+    if (day.length < 2) 
+        day = '0' + day;
+
+    return [year, month, day].join('-');
+}
+
+
+
+
+exports.GenerateConsentReport = async () => {
+
+    const ConsenReport = Parse.Object.extend("ConsentReport");
+    const consenReportQuery = new Parse.Query(ConsenReport);
+    consenReportQuery.limit(5000);
+    const consenReportResults = await consenReportQuery.find({useMasterKey: true});
+    
+    console.log(consenReportResults);
+
+    let lastReportDate = new Date(0,0,0);
+    if(consenReportResults.length > 0) {
+        for (let index = 0; index < consenReportResults.length; index++) {   
+            if(consenReportResults[index].get("endDate") > lastReportDate) {
+                lastReportDate = consenReportResults[index].get("endDate");
+            } 
+        }
+    }
+
+    console.log(lastReportDate);
+
+
+    console.log("Generating Report");
+
+    const Consent = Parse.Object.extend("Consent");
+    const query = new Parse.Query(Consent);
+    query.limit(5000);
+    const results = await query.find({useMasterKey: true});
+    
+
+    var realConsents = [];
+
+    for(const result of results) {
+
+        //console.log(result.get("createdAt"), lastReportDate);
+
+        if(result.get("createdAt") < lastReportDate){
+            continue
+        }
+
+
+        var token = result.get("token");
+        const StudyData = Parse.Object.extend("StudyData");
+        const studyDataQuery = new Parse.Query(StudyData);
+        studyDataQuery.equalTo("giveConsentKey", token);
+        const studyDatas = await studyDataQuery.find({useMasterKey: true});
+    
+        if(studyDatas.length != 0) {
+            realConsents.push([result, studyDatas[0]]);
+        }
+        
+    }
+    
+    //console.log(empty);
+    //console.log(results.length);
+    //console.log(realConsents.length);
+
+    const names = {};
+
+    for(const [rc, sd] of realConsents) {
+        var name = rc.get("name").trim();
+        name = name.replaceAll("  ", " ");
+        
+        if(name in names) {
+            names[name].push([rc,sd]);
+        } else {
+            names[name] = [[rc,sd]];
+        }
+    }
+
+    const filted = {};
+    for(const name in names) {
+        if(names[name].length > 1) {
+            filted[name] = names[name];
+
+            names[name] = [names[name][0]];
+
+        }
+    }
+
+    
+    console.log(filted);
+
+    console.log(names);
+    console.log(Object.keys(names).length);
+
+    if(Object.keys(names).length == 0) {
+        return;
+    }
+
+    await formatAndStoreConsentForm(names);
+}
+
+/*
+const userIsTheSame = async (studyDataId1, studyDataId2) => {
+
+    console.log(studyDataId1, studyDataId2)
+
+    //check if contact email is the same
+    const StudyData = Parse.Object.extend("StudyData");
+    const query = new Parse.Query(StudyData);
+    query.equalTo("objectId", studyDataId1)
+    const results = await query.find({useMasterKey: true});
+    return results;
+
+
+
+    //check which was created first and updated last
+
+    //check address to know if same
+
+    //check if name in consent is the same.
+    
+    //check if login types are the same
+
+    //check if device and os are the same
+
+
+
+
+} */
+
+
+
+const formatAndStoreConsentForm = async (consentQueryResult) => {
+
+    var dataForCSV = [];
+
+    let ealiestDate = new Date(9999,1,1);
+
+    for (const name in consentQueryResult) {
+        if (!Object.hasOwnProperty.call(consentQueryResult, name)) {
+            continue;
+        }
+
+        const [consentData, studyData] = consentQueryResult[name][0];
+
+        let studyBranch = studyData.get("studyBranch");
+        console.log(studyBranch,  consentQueryResult[name][0], name)
+
+        if(consentData.get("createdAt") < ealiestDate) {
+            ealiestDate = consentData.get("createdAt");
+        }
+
+
+        if(studyBranch == "NoStudy") {
+            const LeftStudyQuery = new Parse.Query("LeftStudy")
+            LeftStudyQuery.equalTo("user", studyData.get("user"));
+            const leftStudyResult = await LeftStudyQuery.find({useMasterKey:true});
+        
+            if(leftStudyResult.length > 0) {
+                studyBranch = leftStudyResult[0].get("studyBranch");
+            } else {
+                continue;
+            }
+            
+        } else if(studyBranch == "FreeLivingFromTrial") {
+            studyBranch = "FreeLiving";
+        }
+
+
+        var consentId = consentData.get("participantReference");
+        consentId = consentId.replaceAll("undefined", "");
+
+        const userData = {
+            name: consentData.get("name"),
+            id: consentId,
+            consentFormFilledDate: consentData.get("createdAt"),
+            studyBranch
+        };
+      
+        const token = consentData.get("token");
+        const demographicsDataQuery = new Parse.Query("DemographicsData")
+        demographicsDataQuery.equalTo("token", token);
+        const demographicsDataQueryResult = await demographicsDataQuery.find({useMasterKey:true});
+        if(demographicsDataQueryResult.length == 0) {
+            userData['YearOfBirth'] = "Demographics data not found";
+        } else {
+        const ageRange = demographicsDataQueryResult[0].get("ageRange");
+        if(ageRange == null) {
+            userData['YearOfBirth'] = "Not disclosed by participant";
+        }
+        const ageRangeString = ageRange.substring(0,2);
+            userData['YearOfBirth'] = isNaN(ageRangeString) ? "Not disclosed by participant" : new Date().getFullYear() - Number(ageRangeString);
+        }
+        dataForCSV.push(userData);
+    }
+
+    let csvContent = "Id,Name,YearOfBirth,ConsentFormFilledDate,StudyBranch\n"
+    dataForCSV.forEach(data => {
+      csvContent += `${data.id},${data.name},${data.YearOfBirth},${data.consentFormFilledDate},${data.studyBranch}\n`
+    });
+
+    const currentDate = new Date()
+    let ye = new Intl.DateTimeFormat('en', { year: 'numeric' }).format(currentDate);
+    let mo = new Intl.DateTimeFormat('en', { month: 'short' }).format(currentDate);
+    let da = new Intl.DateTimeFormat('en', { day: '2-digit' }).format(currentDate);
+  
+    const randomFileName = randomBytes(16).toString("hex");
+    const filename = `ParticipantReport${da}${mo}${ye}.${randomFileName}.csv`;
+    const file = new Parse.File(filename, {base64: Buffer.from(csvContent).toString('base64')});
+    
+    try {
+      var saveFileResult = await file.save();
+      if(saveFileResult.code != null) {
+        return;
+      }
+  
+      console.log(file.url());
+      console.log("The file has been saved to Parse.")
+      const ConsentReport = Parse.Object.extend("ConsentReport");
+      const consentReportObject = new ConsentReport();
+  
+      const consentReportObjectACL = new Parse.ACL();
+      consentReportObjectACL.setPublicReadAccess(false);
+  
+      consentReportObject.setACL(consentReportObjectACL);
+      consentReportObject.set("startDate", ealiestDate);
+      consentReportObject.set("endDate", new Date());
+      consentReportObject.set("csvFile", file);
+      await consentReportObject.save({}, {useMasterKey:true});
+  
+  
+      return consentReportObject;
+  
+    } catch(e) {
+      console.log("The file either could not be read, or could not be saved to Parse.", e)
+    }
+}
+ 

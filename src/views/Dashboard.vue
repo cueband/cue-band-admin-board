@@ -359,7 +359,8 @@ export default {
       //await api.ResetStudyTokens();
       //await api.SentTokenToPublic();
 
-      await api.SendNotAcceptedEmail("lapc19@hotmail.com");
+      //api.CreateReport();
+    api.ConsentReport();
     }
   }
 };
