@@ -360,7 +360,7 @@ export default {
       //await api.SentTokenToPublic();
 
       //api.CreateReport();
-    api.ConsentReport();
+    await api.ConsentReport();
     }
   }
 };

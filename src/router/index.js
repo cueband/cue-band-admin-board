@@ -16,6 +16,7 @@ import StudyDataPage from "@/views/StudyDataPage.vue"
 import AddParticipants from "@/views/AddParticipants.vue"
 import StudyStartingEmails from "@/views/StudyStartingEmails.vue"
 import SendStartEmail from "@/views/SendStartEmail.vue"
+import ResetPassword from "@/views/ResetPassword.vue";
 
 const routes = [
   {
@@ -56,6 +57,11 @@ const routes = [
     path: "/dashboard",
     name: "Dashboard",
     component: Dashboard,
+  },
+  {
+    path: "/resetPassword",
+    name: "Reset User Password",
+    component: ResetPassword,
   },
   {
     path: "/tables",

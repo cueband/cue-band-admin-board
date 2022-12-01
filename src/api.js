@@ -742,9 +742,28 @@ exports.Test = async() => {
 
 }
 
+exports.ResetPassword = async(email) => {
+    try {
+        const User = Parse.Object.extend("User");
+        const query = new Parse.Query(User);
+        query.equalTo("email", email.trim());
+        const queryResults = await query.find();
+    
+        if(queryResults.length == 0) {
+            return {success: false, error: "E-mail not found"};
+        }
+
+        await Parse.User.requestPasswordReset(email);
+        return {success: true};
+        
+    } catch(e) {
+        return {success: false, error: e};
+    }
+}
+
 
 exports.TestResetPassword = async() => {
-    var result = await Parse.User.requestPasswordReset("john.wilde11@btinternet.com");
+    var result = await Parse.User.requestPasswordReset();
    console.log(result);
     console.log("done");
 }
