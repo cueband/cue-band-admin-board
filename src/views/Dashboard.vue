@@ -356,11 +356,43 @@ export default {
   },
   methods: {
     async ResetStudyTokens() {
+      
+      //await api.GetHeaders("54hFUuEnJA");
+      
+      //await api.GetPeopleThatFininishedStudy();
+
+      //await api.GetPeopleWhoAreStuck();
+
+      //await api.GetFeedback();
+
+      //await api.GetDataOfUsersThatFinishedByUser();
+      
+      //api.GetDataFromExistingUsers();
+
       //await api.ResetStudyTokens();
       //await api.SentTokenToPublic();
 
-      //api.CreateReport();
-    await api.ConsentReport();
+      //await api.GetUserThatNeedHelp();
+
+      await api.CreateReport();
+      //await api.GenerateConsentReport();
+    
+      //await api.SetAdminRoleAgain();
+    
+      //await api.GetDataOfUsersThatFinishedByUser();
+      //await api.GetPeopleForInterviewQuestionnare();
+
+      //await api.GetSamplesFromUsersOnFreeLiving();
+
+      //await api.GetMissingDataToMaster();
+
+      //await api.CheckUserSwitchBranchBeforeWhileWaiting();
+
+      //await api.SearchForStudyProgress();
+
+      //await api.getParticipantsFromArea();
+
+      //await api.GetPeopleWhoAreStuckData();
     }
   }
 };

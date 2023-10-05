@@ -2,11 +2,13 @@ import { createStore } from "vuex";
 import bootstrap from "bootstrap/dist/js/bootstrap.min.js";
 import users from "./modules/users";
 import studyData from "./modules/studyData";
+import searchResults from "./modules/searchResults";
 
 export default createStore({
   modules: {
     users,
-    studyData
+    studyData,
+    searchResults
   },
   state: {
     hideConfigButton: false,

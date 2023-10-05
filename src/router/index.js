@@ -17,6 +17,8 @@ import AddParticipants from "@/views/AddParticipants.vue"
 import StudyStartingEmails from "@/views/StudyStartingEmails.vue"
 import SendStartEmail from "@/views/SendStartEmail.vue"
 import ResetPassword from "@/views/ResetPassword.vue";
+import ParticipantInfo from "@/views/ParticipantInfo.vue";
+import LeaveStudy from "@/views/LeaveStudy.vue";
 
 const routes = [
   {
@@ -107,6 +109,16 @@ const routes = [
     path: '/studydata/:id', 
     component: StudyDataPage, 
     props: true 
+  },
+  {
+    path: "/participantInfo",
+    name: "Participant Info",
+    component: ParticipantInfo,
+  },
+  {
+    path: "/leaveStudy",
+    name: "Leave Study",
+    component: LeaveStudy,
   }
 ];
 

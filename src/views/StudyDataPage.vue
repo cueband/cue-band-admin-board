@@ -198,6 +198,18 @@
       </div>
       <div class="mt-4 col-12 col-xl-4 mt-xl-0">
         <diary-entry-card :info="{ diaryEntryObject: diaryEntryObject }" v-if="hasDiaryEntry"/>
+        <div class="card" style="margin-top: 10px" v-if="onStudy">
+          <div class="p-3 pb-0 card-header">
+            <div class="row" v-if="leaveStudyWarning">
+              <label>You sure you want to remove this participant from the study?</label>
+              <button class="btn btn-primary" @click="onYesLeaveStudy">Yes</button>
+              <button class="btn btn-primary" @click="onNoLeaveStudy">No</button>
+            </div>
+            <div class="row" v-else>
+              <button class="btn btn-primary" @click="onLeaveStudy">Leave Study</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -273,6 +285,8 @@ export default {
       hasDemographicsData: false,
       diaryEntryObject: {},
       hasDiaryEntry: false,
+      leaveStudyWarning: false,
+      onStudy: false,
     };
   },
   methods: {
@@ -327,6 +341,20 @@ export default {
         platform: `${this.studyDataObject.get("selectBranchesPlatform")} ${this.studyDataObject.get("selectBranchesVersion")}`,
         deviceName: this.studyDataObject.get("selectBranchesDeviceName")
       }
+    },
+
+    async onYesLeaveStudy() {
+      this.leaveStudyWarning = false;
+      await api.SetUserToLeaveStudy(this.studyDataObject);
+      this.onStudy = false;
+    },
+
+    onNoLeaveStudy() {
+      this.leaveStudyWarning = false;
+    },
+
+    onLeaveStudy() {
+      this.leaveStudyWarning = true;
     }
   },
   created() {
@@ -337,6 +365,12 @@ export default {
     let studyData = await api.GetStudyDataById(this.id);
     this.studyDataObject = studyData ? studyData[0] : null;
     console.log(this.studyDataObject)
+
+    if(this.studyDataObject != null) {
+      this.onStudy = this.studyDataObject.get("studyBranch") == "Trial" || 
+      this.studyDataObject.get("studyBranch") == "FreeLiving" || 
+      this.studyDataObject.get("studyBranch") == "FreeLivingFromTrial";
+    }
     
     this.GetConsent();
     this.GetDemographicsData();

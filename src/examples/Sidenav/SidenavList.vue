@@ -60,6 +60,21 @@
           </template>
         </sidenav-collapse>
       </li>
+      <li class="nav-item">
+        <sidenav-collapse navText="Participant Search" :to="{ name: 'Participant Info' }">
+          <template #icon>
+            <box3d />
+          </template>
+        </sidenav-collapse>
+      </li>
+      <li class="nav-item">
+        <sidenav-collapse navText="Leave Study" :to="{ name: 'Leave Study' }">
+          <template #icon>
+            <box3d />
+          </template>
+        </sidenav-collapse>
+      </li>
+
       <!-- <li class="nav-item">
         <sidenav-collapse navText="Dashboard" :to="{ name: 'Dashboard' }">
           <template #icon>
