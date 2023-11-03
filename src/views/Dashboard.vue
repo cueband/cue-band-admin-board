@@ -374,7 +374,7 @@ export default {
 
       //await api.GetUserThatNeedHelp();
 
-      await api.CreateReport();
+      //await api.CreateReport();
       //await api.GenerateConsentReport();
     
       //await api.SetAdminRoleAgain();
@@ -393,6 +393,8 @@ export default {
       //await api.getParticipantsFromArea();
 
       //await api.GetPeopleWhoAreStuckData();
+
+      await api.GetParticipantDistribution();
     }
   }
 };

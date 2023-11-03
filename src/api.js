@@ -2643,13 +2643,13 @@ exports.GetPeopleWhoAreStuckData = async() => {
 
     const StudyData = Parse.Object.extend("StudyData");
     const queryStudyData = new Parse.Query(StudyData);
+    queryStudyData.limit(1000);
     queryStudyData.equalTo("currentState", "WaitingForDevice");
     const usersEndedStudy = await queryStudyData.find({useMasterKey: true});
     let datas = []
     
-    const DeviceOrderSchema = Parse.Object.extend("DeviceOrderSchema");
-  
     for (const studyUser of usersEndedStudy) {
+        const DeviceOrderSchema = Parse.Object.extend("DeviceOrderSchema");
         const queryDeviceOrderSchema = new Parse.Query(DeviceOrderSchema);
         queryDeviceOrderSchema.equalTo("user", studyUser.get("user"));
         queryDeviceOrderSchema.limit(1000);
@@ -2666,13 +2666,16 @@ exports.GetPeopleWhoAreStuckData = async() => {
             deviceType: studyUser.get("selectBranchesDeviceType"),
             address1: "Not found",
             deviceBox1: "Not found",
+            name1: 'Not found',
             address2: "Not found",
-            deviceBox2: "Not found"
+            deviceBox2: "Not found",
+            name2: "Not found"
         }
 
         if(deviceOrderSchemaResult.length > 0) {
             for(let i = 0; i < deviceOrderSchemaResult.length; i++) {
-                data[`address${i}`] = deviceOrderSchemaResult[i].get('address').replaceAll(',', '.').replaceAll('\n', ' ');
+                data[`address${i + 1}`] = deviceOrderSchemaResult[i].get('address').replaceAll(',', ' ').replaceAll('\n', ' ').replaceAll('  ', ' ').toLowerCase();
+                data[`name${i + 1}`] = deviceOrderSchemaResult[i].get('name').replaceAll(',', ' ').replaceAll('\n', ' ').replaceAll('  ', ' ').toLowerCase();
                 const DeviceBoxSchema = Parse.Object.extend("DeviceBoxSchema");
                 const queryDeviceBoxSchema = new Parse.Query(DeviceBoxSchema);
                 try {
@@ -2680,11 +2683,12 @@ exports.GetPeopleWhoAreStuckData = async() => {
                     if(deviceBoxResult != null) {
                         console.log(deviceBoxResult)
                         console.log(deviceBoxResult.get('boxNumber'))
-                        data[`deviceBox${i}`] = deviceBoxResult.get('boxNumber')
+                        data[`deviceBox${i+1}`] = deviceBoxResult.get('boxNumber')
                     }
                 } catch(e) {
                     console.log(e)
                 }
+                
             }
         }
 
@@ -2693,9 +2697,9 @@ exports.GetPeopleWhoAreStuckData = async() => {
 
     datas = datas.sort((a, b) => new Date(a.start) - new Date(b.start));
 
-    let csvContent = "objectId,start,branch,device,version,platform,idiom,deviceType,address1,deviceBox1,address2,deviceBox2\n";
+    let csvContent = "objectId,start,branch,device,version,platform,idiom,deviceType,address1,deviceBox1,name1,address2,deviceBox2,name2\n";
     datas.forEach(data => {
-      csvContent += `${data.objectId},${data.start},${data.branch},${data.device},${data.version},${data.platform},${data.idiom},${data.deviceType},${data.address1},${data.deviceBox1},${data.address2},${data.deviceBox2}\n`
+      csvContent += `${data.objectId},${data.start},${data.branch},${data.device},${data.version},${data.platform},${data.idiom},${data.deviceType},${data.address1},${data.deviceBox1},${data.name1},${data.address2},${data.deviceBox2},${data.name2}\n`
     });
 
     var a = document.createElement("a");
@@ -2705,4 +2709,101 @@ exports.GetPeopleWhoAreStuckData = async() => {
     a.click();
 
     console.log('end')
+}
+
+exports.EraseAddress = async() => {
+
+    console.log("Easing address");
+
+    const DeliveryAddress = Parse.Object.extend("DeliveryAddress");
+    const addressQuery = new Parse.Query(DeliveryAddress);
+    addressQuery.limit(1000);
+    const results = await addressQuery.find({useMasterKey: true});
+
+    for(const address of results) {
+        console.log(address.id);
+        address.set("name", null);
+        address.set("addressLine1", null);
+        address.set("addressLine2", null);
+        address.set("city", null);
+
+        await address.save(null, {useMasterKey: true});
+    }
+
+    console.log(results.length);
+
+    console.log("Easing address done");
+};
+
+exports.EraseDeviceOrder = async() => {
+
+    console.log("Device Order Schema");
+
+    const DeviceOrderSchema = Parse.Object.extend("DeviceOrderSchema");
+    const deviceOrderSchemaQuery = new Parse.Query(DeviceOrderSchema);
+    deviceOrderSchemaQuery.limit(1000);
+    const results = await deviceOrderSchemaQuery.find({useMasterKey: true});
+
+    for(const deviceOrderSchema of results) {
+        console.log(deviceOrderSchema.get("address"));
+        deviceOrderSchema.set("address", null);
+        deviceOrderSchema.set("name", null);
+        await deviceOrderSchema.save(null, {useMasterKey: true});
+    }
+
+    console.log("Easing address done");
+
+};
+
+exports.EraseAppFeedback = async() => {
+    
+        console.log("App Feedback");
+    
+        const AppFeedback = Parse.Object.extend("AppFeedback");
+        const appFeedbackQuery = new Parse.Query(AppFeedback);
+        appFeedbackQuery.limit(1000);
+        const results = await appFeedbackQuery.find({useMasterKey: true});
+    
+        for(const appFeedback of results) {
+            appFeedback.set("username", null);
+            await appFeedback.save(null, {useMasterKey: true});
+        }
+    
+        console.log("App Feedback done");
+}
+
+exports.GetParticipantDistribution = async() => {
+
+    const StudyData = Parse.Object.extend("StudyData");
+    const queryStudyData = new Parse.Query(StudyData);
+    queryStudyData.equalTo("currentState", "PostStudy");
+    queryStudyData.limit(1000);
+    let resultStudyData = await queryStudyData.find({useMasterKey: true});
+
+    const queryStudyData2 = new Parse.Query(StudyData);
+    queryStudyData2.equalTo("previousState", "PostStudy");
+    const usersEndedStudy2 = await queryStudyData2.find({useMasterKey: true});
+    resultStudyData = resultStudyData.concat(usersEndedStudy2);
+    
+    let data = []
+    for(const studyData of resultStudyData) {
+        data.push({
+            studyDataId: studyData.id,
+            user: studyData.get("user").id,
+            cueingMethod1: studyData.get("cueingMethod1"),
+            cueingMethod2: studyData.get("cueingMethod2"),
+        });
+    }
+
+    let csvContent = "studyDataId,user,intervention-order\n"
+    data.forEach(data => {
+      csvContent += `${data.studyDataId},${data.user},${data.cueingMethod1}-${data.cueingMethod2}\n`
+    });
+
+    var a = document.createElement("a");
+    var file = new Blob([csvContent], {type: 'text/csv'});
+    a.href = URL.createObjectURL(file);
+    a.download = "participant_distribution.csv";
+    a.click();
+
 }
